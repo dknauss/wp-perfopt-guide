@@ -1,0 +1,23 @@
+name: Improvement request
+description: Suggest new coverage, examples, checks, or workflow improvements.
+title: "[Improvement]: "
+labels: ["enhancement", "triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Describe the section, diagnostic, checklist item, or workflow improvement you want.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Include references, examples, platforms, or related documents where relevant.

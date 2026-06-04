@@ -1,0 +1,62 @@
+[
+  {
+    "source": "DEVELOPER_REFERENCE.md",
+    "base": "WordPress-Performance-Optimization-Developer-Reference",
+    "title": "WordPress Performance Optimization: Unified Developer Reference",
+    "markers": [
+      "Mental model: performance is the result of work",
+      "Optimization workflow",
+      "Cache layers and responsibilities",
+      "WP-CLI"
+    ],
+    "version": "1.0",
+    "status": "DRAFT",
+    "general_editor": "Dan Knauss",
+    "intro_marker": "Audience:"
+  },
+  {
+    "source": "wordpress-performance-optimization-checklist.md",
+    "base": "WordPress-Performance-Optimization-Checklist",
+    "title": "WordPress Performance Optimization Checklist",
+    "markers": [
+      "Baseline measurement",
+      "Full-page caching",
+      "Object caching and transients",
+      "Definition of done"
+    ],
+    "version": "1.0",
+    "status": "DRAFT",
+    "general_editor": "Dan Knauss",
+    "intro_marker": "A practical, operations-oriented guide"
+  },
+  {
+    "source": "wpvip-enterprise-performance-operational-checklist.md",
+    "base": "Enterprise-WordPress-Performance-Operational-Checklist",
+    "title": "Enterprise WordPress Performance Operational Checklist",
+    "markers": [
+      "Trace the request cycle",
+      "Full-page cache and edge cache",
+      "Object caching",
+      "Performance alerting"
+    ],
+    "version": "1.0",
+    "status": "DRAFT",
+    "general_editor": "Dan Knauss",
+    "intro_marker": "A checklist-oriented runbook"
+  },
+  {
+    "source": "REFERENCE-WP-Transients-Persistent-Object-Cache.md",
+    "base": "WordPress-Transients-Persistent-Object-Cache-Reference",
+    "title": "WordPress Transients and Persistent Object Cache Reference",
+    "markers": [
+      "What transients are",
+      "Where transients are stored",
+      "Race conditions and cache stampedes",
+      "Operational checklist"
+    ],
+    "version": "1.0",
+    "status": "DRAFT",
+    "general_editor": "Dan Knauss",
+    "intro_marker": "A practical reference for understanding"
+  }
+]

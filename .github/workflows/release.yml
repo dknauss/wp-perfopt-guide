@@ -1,0 +1,44 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  create:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release, for example v0.1.0'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      ( github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') ) ||
+      ( github.event_name == 'create' && github.ref_type == 'tag' && startsWith(github.ref, 'v') )
+    runs-on: ubuntu-latest
+    concurrency:
+      group: release-${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name || github.ref }}
+      cancel-in-progress: false
+    env:
+      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name || github.ref }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          generate_release_notes: true
+          make_latest: true
+          files: |
+            *.pdf
+            *.docx
+            *.epub

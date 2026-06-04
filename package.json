@@ -1,0 +1,9 @@
+{
+  "name": "wp-perfopt-guide",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "docs:generate": "bash .github/scripts/generate-docs.sh",
+    "docs:validate": "python3 .github/scripts/validate-artifacts.py"
+  }
+}

@@ -1,0 +1,30 @@
+name: Documentation correction
+description: Report inaccurate, outdated, unclear, or unsafe performance guidance.
+title: "[Correction]: "
+labels: ["documentation", "triage"]
+body:
+  - type: input
+    id: area
+    attributes:
+      label: Affected area
+      description: Name the file, section, command, API, or recommendation involved.
+      placeholder: REFERENCE-WP-Transients-Persistent-Object-Cache.md section 5
+    validations:
+      required: true
+  - type: textarea
+    id: issue
+    attributes:
+      label: Problem
+      description: Describe what is inaccurate, stale, confusing, or risky.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence or references
+      description: Link authoritative docs, source code, measurements, or reproduction steps.
+  - type: textarea
+    id: proposed
+    attributes:
+      label: Proposed correction
+      description: Suggest replacement wording or a safer framing if you have one.
