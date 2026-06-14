@@ -4,7 +4,7 @@
 
 - `DEVELOPER_REFERENCE.md`: 1581 lines, 136 headings, 96 fenced-code markers
 - `wordpress-performance-optimization-checklist.md`: 807 lines, 43 headings, 32 fenced-code markers
-- `wpvip-enterprise-performance-operational-checklist.md`: 852 lines, 43 headings, 54 fenced-code markers
+- `enterprise-performance-operational-checklist.md`: 852 lines, 43 headings, 54 fenced-code markers
 - `REFERENCE-WP-Transients-Persistent-Object-Cache.md`: 440 lines, 31 headings, 24 fenced-code markers
 
 ## Mechanical Notes
@@ -28,5 +28,5 @@
 ?? docs/
 ?? reviews/
 ?? wordpress-performance-optimization-checklist.md
-?? wpvip-enterprise-performance-operational-checklist.md
+?? enterprise-performance-operational-checklist.md
 ```

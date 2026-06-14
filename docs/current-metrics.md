@@ -5,8 +5,8 @@ Last updated: 2026-06-14
 ## Repository
 
 - Primary Markdown guidance files: 5
-- Planning phases: 3
-- Completed planning phases: 3
+- Materialized planning phase directories: 0
+- Materialized archived phase directories: 0
 
 ## Canonical Source Files
 

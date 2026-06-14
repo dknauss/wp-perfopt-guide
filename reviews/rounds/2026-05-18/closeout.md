@@ -65,7 +65,7 @@ After each pass, the agent should:
 - **Affected files:**
   - `DEVELOPER_REFERENCE.md` (lines 1235–1242 of the synthesis-time version; current line numbers may differ — search for `Speculative Loading` and `prerender` / `mousedown`).
   - `wordpress-performance-optimization-checklist.md` (Modern additions appendix, Speculative Loading subsection).
-  - `wpvip-enterprise-performance-operational-checklist.md` (Modern additions appendix, Speculative Loading subsection).
+  - `enterprise-performance-operational-checklist.md` (Modern additions appendix, Speculative Loading subsection).
 - **What is wrong:** Three docs describe Core 6.8 as defaulting to `prerender` on `mousedown` and refer readers to `Settings → Reading`. Both are wrong. Per the Make/Core dev note, Core 6.8 effectively defaults to `prefetch` with `conservative` eagerness, is disabled for logged-in users and sites without pretty permalinks, and exposes customization via filters and block CSS classes — not a Core UI. The settings UI belongs to the standalone Speculative Loading plugin.
 - **Edit instructions:** Replace the Speculative Loading subsection in each doc with a shared canonical paragraph. Draft replacement text:
 
@@ -97,7 +97,7 @@ After each pass, the agent should:
 - **Affected files:**
   - `DEVELOPER_REFERENCE.md` (lines 835–879 — cache stampede object-cache form and transient form).
   - `REFERENCE-WP-Transients-Persistent-Object-Cache.md` (Section 8 stampede example).
-  - `wpvip-enterprise-performance-operational-checklist.md` (§14 race conditions and cache stampedes).
+  - `enterprise-performance-operational-checklist.md` (§14 race conditions and cache stampedes).
 - **What is wrong:** Examples use `wp_cache_add()` as a lock without stating that the default WordPress object cache is request-local (non-persistent). Without a persistent `object-cache.php` drop-in with atomic-add semantics (Redis/Memcached integration), the "lock" doesn't lock anything — each PHP process has its own runtime cache.
 - **Edit instructions:** Add an explicit precondition note above each lock example and offer fallbacks for non-persistent environments. Suggested wording to insert directly before the existing lock code block:
 
@@ -128,7 +128,7 @@ After each pass, the agent should:
 - **Affected files:**
   - `DEVELOPER_REFERENCE.md` (§16 WP-Cron section).
   - `wordpress-performance-optimization-checklist.md` (§15 / §16, also wp-config.php block at line ~511).
-  - `wpvip-enterprise-performance-operational-checklist.md` (§15 WP-Cron section).
+  - `enterprise-performance-operational-checklist.md` (§15 WP-Cron section).
 - **What is wrong:** Snippet order presents the disabling constant first and the external runner second. The safe order is the inverse.
 - **Edit instructions:** Reorder every WP-Cron production-pattern block so the sequence is:
 
@@ -227,7 +227,7 @@ After each pass, the agent should:
 - **Affected files:**
   - `DEVELOPER_REFERENCE.md` (top-of-doc currency note; appendix WP 6.6/6.8 sections; any `current to WordPress 6.8` strings).
   - `wordpress-performance-optimization-checklist.md` (Modern additions appendix).
-  - `wpvip-enterprise-performance-operational-checklist.md` (Modern additions appendix).
+  - `enterprise-performance-operational-checklist.md` (Modern additions appendix).
 - **What is wrong:** Three docs frame May 2026 material as "current through WordPress 6.8." Per the WordPress release archive, **6.9.4** is the current stable as of May 2026, with material performance changes documented in the 6.9 Field Guide.
 - **Scope limit:** The body of these docs is about the practice of performance work and is not version-sensitive in most places. Only version-specific content (Speculation Rules, autoload, Performance Lab, query cache, cron spawn) needs active refresh. Do **not** rewrite untouched guidance just because the version stamp changed.
 - **Edit instructions:**
@@ -264,7 +264,7 @@ After each pass, the agent should:
 - **Severity:** Medium. Misleading instrumentation; duplicated incorrect snippet.
 - **Affected files:**
   - `DEVELOPER_REFERENCE.md` (§26 measurement tools, New Relic example).
-  - `wpvip-enterprise-performance-operational-checklist.md` (§20 New Relic subsection).
+  - `enterprise-performance-operational-checklist.md` (§20 New Relic subsection).
 - **What is wrong:** Both copies call `newrelic_start_transaction( 'my_custom_transaction' )` as if the argument names a custom transaction. The argument is the **New Relic application name**, used for advanced cases like queue workers that end one transaction and start another in a different app. For naming the current request's transaction, the correct API is `newrelic_name_transaction()`.
 - **Edit instructions:** Replace both copies with this snippet:
 
@@ -301,7 +301,7 @@ After each pass, the agent should:
 - **Affected files:**
   - `DEVELOPER_REFERENCE.md` (§22 Performance Lab subsection).
   - `wordpress-performance-optimization-checklist.md` (Modern additions appendix).
-  - `wpvip-enterprise-performance-operational-checklist.md` (Modern additions appendix).
+  - `enterprise-performance-operational-checklist.md` (Modern additions appendix).
 - **What is wrong:** Lists use stale module names (e.g. "WebP Uploads") and mix the older "modules inside Performance Lab" framing with the current feature-plugin model.
 - **Edit instructions:** Replace the static feature-plugin list with dated, source-checked wording:
 
@@ -340,7 +340,7 @@ After each pass, the agent should:
 - **Severity:** Medium. Reduces a common operator misconception; canonical wording already exists in the reference docs.
 - **Affected files:**
   - `wordpress-performance-optimization-checklist.md`
-  - `wpvip-enterprise-performance-operational-checklist.md`
+  - `enterprise-performance-operational-checklist.md`
 - **What is wrong:** The two checklists do not consistently distinguish `WP_CACHE`/`advanced-cache.php` from `object-cache.php`. The reference docs do.
 - **Edit instructions:** Insert this concise canonical paragraph into both checklists at the start of any cache-related section (good candidates: §5 Full-page caching in the Remkus checklist; §12 Object caching in the VIP checklist):
 
@@ -395,7 +395,7 @@ After each pass, the agent should:
 - **Origin:** source-derived (Remkus checklist predates WP 6.6).
 - **Severity:** Medium. Internal contradiction — modern API in appendix, legacy `yes`/`no` in body.
 - **Affected files:**
-  - `wordpress-performance-optimization-checklist.md` (primary). Also verify `wpvip-enterprise-performance-operational-checklist.md` for the same issue; the developer reference should already be consistent.
+  - `wordpress-performance-optimization-checklist.md` (primary). Also verify `enterprise-performance-operational-checklist.md` for the same issue; the developer reference should already be consistent.
 - **What is wrong:** Body says things like "set large rarely-used options to `autoload = no` where safe" (legacy SQL vocabulary). The appendix already added 6.6 vocabulary and `wp_set_option_autoload()`/`wp option set-autoload`. The body should match.
 - **Edit instructions:** In every operational bullet that mentions autoload:
   - Replace `autoload = no` with `autoload = off`.
@@ -418,7 +418,7 @@ After each pass, the agent should:
 - **Severity:** Medium. Prevents cache bleed, high-cardinality growth, and stale personalized output.
 - **Affected files:**
   - `DEVELOPER_REFERENCE.md` (§18 partial-output / fragment caching).
-  - `wpvip-enterprise-performance-operational-checklist.md` (§7 partial output caching).
+  - `enterprise-performance-operational-checklist.md` (§7 partial output caching).
   - `wordpress-performance-optimization-checklist.md` — verify related cache-key guidance.
 - **What is wrong:** Developer reference says "key on user ID — or don't cache it"; enterprise example keys only on `get_current_blog_id()`. Neither warns about cardinality, privacy exposure, or invalidation triggers.
 - **Edit instructions:** Add a shared **Cache-key safety checklist** to the developer reference §18 (canonical home) and reference it from the enterprise checklist. Draft text:
@@ -575,7 +575,7 @@ grep -rn "prerender on \`mousedown\`\|Settings → Reading\|WebP Uploads\|autolo
   DEVELOPER_REFERENCE.md \
   REFERENCE-WP-Transients-Persistent-Object-Cache.md \
   wordpress-performance-optimization-checklist.md \
-  wpvip-enterprise-performance-operational-checklist.md
+  enterprise-performance-operational-checklist.md
 
 # Sibling-folder relative paths that should be repointed
 grep -rn "\.\./remkus-make-wordpress-fast\|\.\./wpvip-enterprise-performance\|\.\./wordpress-transients-object-cache\|\.\./wordpress-performance-master-reference" \

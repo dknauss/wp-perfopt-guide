@@ -10,7 +10,7 @@ Primary documents:
 
 1. `DEVELOPER_REFERENCE.md`
 2. `wordpress-performance-optimization-checklist.md`
-3. `wpvip-enterprise-performance-operational-checklist.md`
+3. `enterprise-performance-operational-checklist.md`
 4. `REFERENCE-WP-Transients-Persistent-Object-Cache.md`
 
 Supporting repository guidance:

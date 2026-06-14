@@ -1,6 +1,6 @@
 # Phase 1 Review — `DEVELOPER_REFERENCE.md`
 
-Scope: independent audit of `/Users/danknauss/Developer/GitHub/wp-perfopt-guide/DEVELOPER_REFERENCE.md` only. Source document was not edited.
+Scope: independent audit of `DEVELOPER_REFERENCE.md` only. Source document was not edited.
 
 Review principles applied: measurement-first recommendations, cache-layer precision, WordPress API accuracy, version-sensitive verification, operational safety.
 

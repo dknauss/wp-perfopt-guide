@@ -5,6 +5,7 @@ All notable changes to this repository are documented here.
 ## Unreleased
 
 ### Changed
+- Post-review cleanup: added a new 2026-06-14 review round archive, updated the review methodology to the five-document Performance series, made planning-metrics wording mechanically truthful, removed a dated review-round pointer from the transients reference, and normalized the 2026-05-18 archive to remove local absolute paths and stale filename fossils.
 - Added the incident runbook to `.github/documents.json` so PDF, DOCX, and EPUB publication artifacts are generated and validated with the rest of the Performance series.
 - Added `wordpress-performance-incident-runbook.md`, a unified operational runbook for active WordPress performance incidents with read-first procedures, rollback steps, verification, and escalation criteria.
 - Integrated WordPress 6.4–7.0 performance guidance throughout the general and enterprise checklists, replacing separate “modern additions” appendix framing with section-level guidance for autoloaded options, speculative loading, Performance Lab, PHP/runtime baselines, WP-Cron, frontend loading, and AI/connectors operational review.

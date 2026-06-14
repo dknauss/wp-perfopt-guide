@@ -10,5 +10,5 @@ Canonical source files:
 
 - `DEVELOPER_REFERENCE.md`
 - `wordpress-performance-optimization-checklist.md`
-- `wpvip-enterprise-performance-operational-checklist.md`
+- `enterprise-performance-operational-checklist.md`
 - `REFERENCE-WP-Transients-Persistent-Object-Cache.md`

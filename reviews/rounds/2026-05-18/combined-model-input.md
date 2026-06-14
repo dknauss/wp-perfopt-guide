@@ -72,7 +72,7 @@ Agent configuration for AI-assisted editorial and documentation work in this rep
 |---|---|
 | `DEVELOPER_REFERENCE.md` | Unified developer reference and mental model for performance work. |
 | `wordpress-performance-optimization-checklist.md` | General WordPress performance checklist and triage flow. |
-| `wpvip-enterprise-performance-operational-checklist.md` | Enterprise/WP VIP-oriented operational checklist. |
+| `enterprise-performance-operational-checklist.md` | Enterprise/WP VIP-oriented operational checklist. |
 | `REFERENCE-WP-Transients-Persistent-Object-Cache.md` | Focused reference on transients, object cache, expiration semantics, and cache behavior. |
 
 ## 3. Editorial Principles
@@ -154,7 +154,7 @@ Last updated: 2026-05-18
 
 - `DEVELOPER_REFERENCE.md`
 - `wordpress-performance-optimization-checklist.md`
-- `wpvip-enterprise-performance-operational-checklist.md`
+- `enterprise-performance-operational-checklist.md`
 - `REFERENCE-WP-Transients-Persistent-Object-Cache.md`
 
 
@@ -1757,7 +1757,7 @@ A practical, operations-oriented guide for improving WordPress performance witho
 
 ## Companion cross-reference: WP VIP Enterprise Performance
 
-Use this checklist as the broad WordPress/operator workflow. When the target site is enterprise-scale, VIP-hosted, or dominated by backend/database/cache behavior, cross-check the companion WP VIP runbook at [`../wpvip-enterprise-performance/wpvip-enterprise-performance-operational-checklist.md`](../wpvip-enterprise-performance/wpvip-enterprise-performance-operational-checklist.md). It goes deeper on `WP_Query`, `NOT IN`, `LIKE`, post meta, taxonomies, `EXPLAIN`, Elasticsearch/offloaded search, object-cache race conditions, cache stampedes, load testing, New Relic/APM, and high-traffic events.
+Use this checklist as the broad WordPress/operator workflow. When the target site is enterprise-scale, VIP-hosted, or dominated by backend/database/cache behavior, cross-check the companion WP VIP runbook at [`enterprise-performance-operational-checklist.md`](enterprise-performance-operational-checklist.md). It goes deeper on `WP_Query`, `NOT IN`, `LIKE`, post meta, taxonomies, `EXPLAIN`, Elasticsearch/offloaded search, object-cache race conditions, cache stampedes, load testing, New Relic/APM, and high-traffic events.
 
 @dknauss
 ---
@@ -2560,7 +2560,7 @@ INP replaced FID as a Core Web Vital on March 12, 2024. Any report still talking
 --- END DOCUMENT: wordpress-performance-optimization-checklist.md ---
 
 
---- BEGIN DOCUMENT: wpvip-enterprise-performance-operational-checklist.md ---
+--- BEGIN DOCUMENT: enterprise-performance-operational-checklist.md ---
 
 # Enterprise WordPress Performance Operational Checklist
 
@@ -3416,7 +3416,7 @@ WP VIP Learn lesson 34 (WP Cron) shows the cron URL as `http://yourdomain.com/wp
 - [Introducing INP to Core Web Vitals (Google Search Central)](https://developers.google.com/search/blog/2023/05/introducing-inp)
 
 
---- END DOCUMENT: wpvip-enterprise-performance-operational-checklist.md ---
+--- END DOCUMENT: enterprise-performance-operational-checklist.md ---
 
 
 --- BEGIN DOCUMENT: REFERENCE-WP-Transients-Persistent-Object-Cache.md ---

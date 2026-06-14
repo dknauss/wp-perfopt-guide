@@ -463,4 +463,3 @@ No. Transients with an expiration are not autoloaded. Only transients set withou
 - [WordPress.org Developer Docs: `wp_start_object_cache()`](https://developer.wordpress.org/reference/functions/wp_start_object_cache/)
 - [WordPress/Advanced-administration-handbook PR #485](https://github.com/WordPress/Advanced-administration-handbook/pull/485)
 - Source-correction audit trail: `docs/source-corrections.md`
-- Editorial review round: `reviews/rounds/2026-05-18/`

@@ -26,7 +26,7 @@ To run the same prompt through external model interfaces, submit this exact inpu
 - `AGENTS.md`
 - `DEVELOPER_REFERENCE.md`
 - `wordpress-performance-optimization-checklist.md`
-- `wpvip-enterprise-performance-operational-checklist.md`
+- `enterprise-performance-operational-checklist.md`
 - `REFERENCE-WP-Transients-Persistent-Object-Cache.md`
 - `docs/current-metrics.md`
 
@@ -47,7 +47,7 @@ ROUND="reviews/rounds/2026-05-18"
 cat "$ROUND/review-prompt.md" AGENTS.md docs/current-metrics.md \
   DEVELOPER_REFERENCE.md \
   wordpress-performance-optimization-checklist.md \
-  wpvip-enterprise-performance-operational-checklist.md \
+  enterprise-performance-operational-checklist.md \
   REFERENCE-WP-Transients-Persistent-Object-Cache.md \
   > "$ROUND/combined-model-input.md"
 ```
