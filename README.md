@@ -2,7 +2,7 @@
 [![AI Authorship](https://img.shields.io/badge/AI%20authorship-disclosed-8a63d2.svg)](docs/ai-authorship.md)
 
 
-General and enterprise WordPress performance optimization guidance for developers, technical leads, and operators. Together, the five canonical source documents in this repository form the **Performance series**.
+General and enterprise WordPress performance optimization guidance for developers, technical leads, site reliability engineers, and operators. Together, the five canonical source documents in this repository form the **Performance series**.
 
 ## Contents
 
