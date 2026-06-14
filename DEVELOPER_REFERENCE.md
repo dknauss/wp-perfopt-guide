@@ -1,6 +1,6 @@
 # WordPress Performance Optimization: Unified Developer Reference
 
-> **Status:** DRAFT
+> **Status:** Released
 > **Version:** 1.2
 > **Date:** 14 June 2026
 > **General Editor:** Dan Knauss
@@ -488,7 +488,7 @@ PHP workers (php-fpm pool size, Apache MPM workers, etc.) set the concurrency ce
 
 ### PHP version
 
-Use a supported PHP version. WordPress 7.0 raises the minimum supported PHP version to 7.4.0, while PHP 8.3 remains the minimum recommended version; PHP 8.3/8.4 generally provide meaningful performance and security wins over 7.x without WordPress code changes. Older PHP is slower, less secure, and increasingly unsupported by plugin authors.
+Use a supported PHP version. WordPress 7.0 raises the minimum supported PHP version to 7.4.0, while PHP 8.3 remains the recommended baseline for modern performance work; PHP 8.3/8.4 generally provide meaningful performance and security wins over 7.x without WordPress code changes. Older PHP is slower, less secure, and increasingly unsupported by plugin authors.
 
 ---
 
@@ -1302,7 +1302,7 @@ Treat this as a delta inventory, not a substitute for measurement: verify impact
 
 WordPress 7.0 was released on May 20, 2026 and was the current active branch verified on 2026-06-14. The most relevant 7.0 changes for this performance guide are compatibility and operational-risk changes rather than a single universal speed feature:
 
-- **PHP support baseline:** WordPress 7.0 drops support for PHP 7.2 and 7.3. The new minimum supported PHP version is 7.4.0, while PHP 8.3 remains the minimum recommended version. For performance work, treat PHP 7.4 as a compatibility floor, not an optimization target; benchmark on the production-intended PHP 8.x runtime when possible.
+- **PHP support baseline:** WordPress 7.0 drops support for PHP 7.2 and 7.3. The new minimum supported PHP version is 7.4.0, while PHP 8.3 remains the recommended baseline for modern performance work. For performance work, treat PHP 7.4 as a compatibility floor, not an optimization target; benchmark on the production-intended PHP 8.x runtime when possible.
 - **AI Client, Client-side Abilities, and Connectors:** WordPress 6.9 introduced the server-side Abilities API as an AI-building-block foundation. WordPress 7.0 adds the WP AI Client, client-side Abilities package, and a Connectors screen/API. These features are infrastructure and extensibility surfaces, not automatic frontend performance improvements. If a site enables AI-backed workflows, MCP adapter/connectors, or connector plugins, include external API latency, timeout behavior, credential scoping, caching, and background processing in the performance review.
 - **Modernized admin/editor surfaces:** Admin view transitions, Command Palette access, Font Library changes, Visual Revisions, and the iframed editor can improve operator experience but may change the JavaScript, CSS, and editor-plugin compatibility profile of admin screens. Re-test slow editorial workflows after upgrading.
 - **Real-time collaboration did not ship in Core 7.0:** Do not attribute editor load, memory, or server-concurrency behavior to Core real-time collaboration in WordPress 7.0. The feature was removed before release because of concerns including race conditions, server load, memory efficiency, and recurring bugs.
