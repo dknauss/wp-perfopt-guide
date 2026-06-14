@@ -1,19 +1,19 @@
 # WordPress Performance Optimization: Unified Developer Reference
 
-> **Status:** DRAFT  
-> **Version:** 1.1  
+> **Status:** DRAFT
+> **Version:** 1.2
 > **Date:** 14 June 2026
 > **General Editor:** Dan Knauss
 
-> **Audience:** This guide is for developers doing WordPress performance optimization who need to decide **what to measure, where to look, what to change, and how to verify the result**. 
+> **Audience:** This guide is for developers doing WordPress performance optimization who need to decide **what to measure, where to look, what to change, and how to verify the result**.
 
-> **Environments:** Ordinary hosting, standard managed WordPress hosting platforms, and enterprise environments. 
+> **Environments:** Ordinary hosting, standard managed WordPress hosting platforms, and enterprise environments.
 
 > **Acknowledgements:** This document draws on and has been checked against canonical resources and industry leaders, including the official **WordPress.org Advanced Administration Handbook**, Automattic/WordPress VIP Learn’s **Enterprise WordPress Performance** course, and Remkus de Vries’ **Make WordPress Fast** course for the Within WordPress Guild. Community discussions around WordPress.org developer documentation on transients, object caching, cache bootstrap behavior, the Options API, and modern Core performance features have informed this document as well.
 
-> **Currency:** Last verified against WordPress 6.9.4 on 2026-05-18.
+> **Currency:** Last verified against WordPress 7.0 on 2026-06-14.
 
-Three Core areas have changed materially beyond the current scope of the sources named above. The Options API autoload vocabulary expanded in WordPress 6.6, speculative loading merged into Core in WordPress 6.8, and WordPress 6.9 added frontend, query/cache, and WP-Cron performance deltas. All version-specific guidance below is scoped to WordPress 6.9.4.
+This guide is written for the post-WordPress 7.0 baseline. It treats modern option autoload APIs, the WordPress 6.6 autoload vocabulary, Core speculative loading, WordPress 6.9 frontend/cron/cache changes, and WordPress 7.0 PHP/admin/editor/AI-connectors implications as part of the normal operating context rather than as add-ons. Version-specific guidance below is scoped to WordPress 7.0 unless a section explicitly names an older branch.
 
 ---
 
@@ -52,7 +52,7 @@ Backend metrics explain where delays originate. Frontend metrics explain how del
 
 ## 2. Source strengths and how to use them
 
-### Remkus / Make WordPress Fast is strongest for
+### `wordpress-performance-optimization-checklist.md` is strongest for
 
 - whole-stack performance thinking;
 - user-centric performance and Core Web Vitals;
@@ -68,7 +68,7 @@ Backend metrics explain where delays originate. Frontend metrics explain how del
 - `wp-config.php` as policy (revisions, Heartbeat, debug constants);
 - practical operator checklists and client communication.
 
-### WP VIP / Enterprise WordPress Performance is strongest for
+### `enterprise-performance-operational-checklist.md` is strongest for
 
 - enterprise request-cycle analysis;
 - cacheability, edge cache, TTL, invalidation, and cache misses;
@@ -82,7 +82,7 @@ Backend metrics explain where delays originate. Frontend metrics explain how del
 - object-cache race conditions and cache stampedes;
 - traffic patterns, high-traffic event prep, load testing, New Relic, and alerting.
 
-Both courses cover Query Monitor heavily; treat it as a tool that belongs to both, not just one.
+Query Monitor appears throughout the source material and belongs to both guide contexts: use it for general diagnosis and for enterprise-scale backend/cache/database investigations.
 
 ### WordPress.org developer docs are authoritative for
 
@@ -101,9 +101,9 @@ Both courses cover Query Monitor heavily; treat it as a tool that belongs to bot
 - distinguishing `advanced-cache.php` page-cache drop-ins from `object-cache.php` persistent object-cache drop-ins;
 - clarifying that transients are not always memory-backed.
 
-### A note on source freshness
+### Naming boundary for source material
 
-Both source courses were recorded before WordPress 6.4 added helper functions for managing option autoload state, before WordPress 6.6 changed the Options API autoload vocabulary, before WordPress 6.8 merged the Speculation Rules API, and before WordPress 6.9 added further frontend and cron performance changes. The Remkus operator checklist still filters for only the legacy `'yes'` autoload value, which is now incomplete (see §12). Neither source course covers Performance Lab feature plugins, modern autoload helper APIs, Speculation Rules, or the WordPress 6.9 performance deltas. Where this reference adds material that is not in the source courses, it is marked **Core-only** in the relevant section heading.
+The two main repository-owned documents are the general [`wordpress-performance-optimization-checklist.md`](wordpress-performance-optimization-checklist.md) and the enterprise [`enterprise-performance-operational-checklist.md`](enterprise-performance-operational-checklist.md). Source names such as Remkus, Make WordPress Fast, WordPress VIP, and Enterprise WordPress Performance are used only for acknowledgements, source notes, and correction rationale — not as titles for the guides themselves.
 
 ---
 
@@ -199,10 +199,6 @@ Check:
 ### Step 7: Change one thing and verify
 
 Every change needs before/after evidence. If the measured bottleneck does not move, you either fixed the wrong thing or measured the wrong target.
-
-### Naming this discipline: TRACE
-
-Remkus’s course frames this method as **TRACE**: follow the signal through the stack, narrow the pattern, gather evidence before acting. TRACE is not an acronym in the course — it is a discipline of refusing to optimize from guesswork. The decision trees in §27 implement it explicitly.
 
 ---
 
@@ -340,7 +336,7 @@ Review:
 curl -IL https://example.com/some-url/
 ```
 
-Look for `x-redirect-by` (the diagnostic pattern below originates in VIP’s operational guidance; see VIP operational checklist §4):
+Look for `x-redirect-by` (the diagnostic pattern below originates in WordPress VIP’s operational guidance; see enterprise operational checklist §4):
 
 ```text
 x-redirect-by: WordPress
@@ -364,7 +360,7 @@ add_filter( 'x_redirect_by', function( $x_redirect_by, $status, $location ) {
 
 ## 7. DNS, TLS, and HTTP transport
 
-A page cannot be fast if connection setup is slow. The transport layer is the first place a request spends time, and a misconfigured edge can add hundreds of milliseconds before WordPress even runs. Remkus’s Modules 2–3 dedicate twelve lessons to this; the developer-relevant takeaways are below.
+A page cannot be fast if connection setup is slow. The transport layer is the first place a request spends time, and a misconfigured edge can add hundreds of milliseconds before WordPress even runs.
 
 ### DNS
 
@@ -454,7 +450,7 @@ For the LCP image specifically, use `imagesrcset` and `imagesizes` so the preloa
 
 ### Modern alternative: speculative loading
 
-For navigation hints (not resource hints), see §22 — WordPress 6.8 ships Speculation Rules support whose Core default is conservative prefetching, while prerender is an opt-in/plugin/custom configuration choice.
+For navigation hints (not resource hints), WordPress 6.8+ ships Speculation Rules support whose Core default is conservative prefetching, while prerender is an opt-in/plugin/custom configuration choice. Treat speculative loading as part of cache and analytics design: exclude authenticated, session-keyed, cart/checkout, preview, and other personalized paths before widening prefetch or prerender behavior.
 
 ---
 
@@ -492,7 +488,7 @@ PHP workers (php-fpm pool size, Apache MPM workers, etc.) set the concurrency ce
 
 ### PHP version
 
-Use a supported PHP version (8.2+ in 2026; 8.3/8.4 give meaningful perf wins over 7.x without WordPress code changes). Older PHP is slower, less secure, and increasingly unsupported by plugin authors.
+Use a supported PHP version. WordPress 7.0 raises the minimum supported PHP version to 7.4.0, while PHP 8.3 remains the minimum recommended version; PHP 8.3/8.4 generally provide meaningful performance and security wins over 7.x without WordPress code changes. Older PHP is slower, less secure, and increasingly unsupported by plugin authors.
 
 ---
 
@@ -585,7 +581,7 @@ $query = new WP_Query(
 );
 ```
 
-The `no_found_rows => true` flag is mainstream WordPress core guidance, not a VIP-specific recommendation. It suppresses the `SQL_CALC_FOUND_ROWS` clause that powers pagination counts; if you are not using pagination, skipping it is a meaningful win on large `wp_posts` tables. (See WordPress Trac #10469 for the history of why `SQL_CALC_FOUND_ROWS` is now considered an anti-pattern.)
+The `no_found_rows => true` flag is mainstream WordPress core guidance, not a WordPress VIP-specific or enterprise-only recommendation. It suppresses the `SQL_CALC_FOUND_ROWS` clause that powers pagination counts; if you are not using pagination, skipping it is a meaningful win on large `wp_posts` tables. (See WordPress Trac #10469 for the history of why `SQL_CALC_FOUND_ROWS` is now considered an anti-pattern.)
 
 Avoid unbounded queries:
 
@@ -679,7 +675,7 @@ Older `'yes'`/`'no'` rows still exist on upgraded sites and are treated as `'on'
 
 ### Review queries (6.6-aware)
 
-Old guidance — including the Remkus operator checklist this reference inherits — filters a `WHERE autoload` filter that matches only `'yes'`. That misses everything written under the new vocabulary. Use this instead:
+Old guidance filters a `WHERE autoload` filter that matches only `'yes'`. That misses everything written under the new vocabulary. Use this instead:
 
 ```sql
 SELECT option_name, LENGTH(option_value) AS size, autoload
@@ -829,7 +825,7 @@ Persistent object cache is valuable only if hit rates are healthy and memory pre
 
 WordPress works with both Redis and Memcached as persistent object cache backends, but the choice has practical consequences:
 
-- **Memcached** is a pure in-memory key/value store. Fast, simple, ephemeral. Eviction is LRU; there is no persistence and no advanced data structures. This is the historical default on VIP-style platforms.
+- **Memcached** is a pure in-memory key/value store. Fast, simple, ephemeral. Eviction is LRU; there is no persistence and no advanced data structures. This is the historical default on WordPress VIP and similar enterprise platforms.
 - **Redis** offers richer data structures, optional persistence, pub/sub, atomic operations, and better introspection.
 
 **Backend selection.** Use the host-supported `object-cache.php` drop-in first. Absent a platform constraint, Redis is generally a better match for WordPress workloads because of richer observability (per-key TTLs, hot-key detection), data structures useful for cache groups, and atomic operations used by some lock patterns. Memcached is appropriate when it is the platform-supported, well-instrumented default — switching backends has operational cost and should be justified by measured cache hit rate, latency, eviction, and failure behavior on the target host.
@@ -982,13 +978,13 @@ After setting the constant, confirm scheduled events continue to complete on tim
 
 Rollback: comment out the `DISABLE_WP_CRON` line, clear OPcache if needed, and confirm due events begin progressing again.
 
-The source courses disagree on the interval (VIP uses `* * * * *` / every minute, Remkus uses `*/5 * * * *` / every five minutes); the right answer depends on what is scheduled. If you have second-counts-late jobs, run every minute; otherwise five minutes is the calmer default.
+Interval: Enterprise contexts often use `* * * * *` / every minute instead of `*/5 * * * *` / every five minutes. The right answer depends on what is scheduled. If you have second-counts-late jobs, run every minute; otherwise five minutes is the calmer default.
 
 ### Review
 
 ## 17. `wp-config.php` as policy
 
-Defaults are safe, not optimal. `wp-config.php` is where you encode site-level performance and operational policy. Remkus’s Module 15 frames this well: treat the wp-config as policy, not as a place to dump constants you copied from a forum.
+Defaults are safe, not optimal. `wp-config.php` is where you encode site-level performance and operational policy. Treat wp-config as policy, not as a place to dump constants you copied from somewhere else.
 
 ```php
 // Debug — production-safe.
@@ -1049,7 +1045,7 @@ Use these with judgment. Don’t paste configuration blindly — align it with e
 
 ## 18. Partial-output / fragment caching
 
-When full-page caching is impossible (logged-in views, mixed content, frequently changing components) but a specific expensive fragment is reused across many requests, cache the fragment. VIP’s operational checklist §7 calls this out explicitly; the pattern is `ob_start()` plus the object cache.
+When full-page caching is impossible (logged-in views, mixed content, frequently changing components) but a specific expensive fragment is reused across many requests, cache the fragment. Our enterprise operational checklist §7 calls this out explicitly; the pattern is `ob_start()` plus the object cache.
 
 ```php
 <?php
@@ -1161,7 +1157,7 @@ Thresholds are evaluated at the **75th percentile** across a site’s real users
 - Use correct sizes.
 - Use `srcset` and `sizes`.
 - Compress appropriately.
-- Use WebP/AVIF where suitable; the Performance Lab ecosystem currently exposes this through **Modern Image Formats** (formerly named for WebP uploads). Verify the active plugin and image pipeline before rollout (see §22).
+- Use WebP/AVIF where suitable; the Performance Lab ecosystem currently exposes this through **Modern Image Formats** (formerly named for WebP uploads). Verify the active plugin and image pipeline before rollout.
 - Lazy-load below-fold images. (Core auto-adds `loading="lazy"` to most `<img>` tags.)
 - Preload the true LCP image only when necessary.
 
@@ -1257,17 +1253,17 @@ At scale:
 
 ---
 
-## 22. Core-only: WordPress Performance Lab and Core innovations (verified against WordPress 6.9.4, 2026-05-18)
+## 22. Current WordPress platform features and upgrade checks (verified against WordPress 7.0, 2026-06-14)
 
-This section covers WordPress Core and Performance Lab capabilities that **are not in the source courses** because they shipped after recording. They are the most important version-specific additions to fold into a 2026 WordPress performance stack.
+This section collects current WordPress Core and Performance Lab capabilities that affect a 2026 performance stack. Use it as an upgrade-check companion to the layer-specific guidance above, not as a separate appendix of optional add-ons.
 
-Last verified against WordPress 6.9.4 on 2026-05-18.
+Last verified against WordPress 7.0 on 2026-06-14.
 
-### Performance Lab feature plugins (verified against the plugin directory on 2026-05-18)
+### Performance Lab feature plugins (verified against the plugin directory on 2026-06-14)
 
 [Performance Lab](https://wordpress.org/plugins/performance-lab/) is the Core team's feature-plugin discovery and management layer. As features mature inside the Performance Lab ecosystem they either graduate into Core or remain as standalone plugins; the catalog rotates over time. Verify the current featured plugins on the Performance Lab plugin page before recommending any specific module.
 
-Featured plugins as of 2026-05-18 include:
+Featured plugins as of 2026-06-14 include:
 
 - **Embed Optimizer** — improves embeds that otherwise add third-party request and rendering cost.
 - **Enhanced Responsive Images** — refines responsive image sizing decisions, including lazy-loaded images.
@@ -1278,7 +1274,7 @@ Featured plugins as of 2026-05-18 include:
 - **Optimization Detective** — opt-in real-user measurement that informs Core/Performance Lab decisions; dependency for some other featured plugins.
 - **Performant Translations**, **Speculative Loading**, and **View Transitions** — additional featured plugins whose relevance depends on the site and rollout risk.
 
-Recommendation: evaluate Performance Lab on staging, look at the current Featured Plugins list at the verification time, and adopt specific plugins by name only when they match the site's documented performance need.
+Recommendation: evaluate Performance Lab on staging, look at the current Featured Plugins list at the verification time, and adopt specific plugins by name only when they match the site's documented performance need. The catalog changes over time; for example, Performance Lab 4.1.0 removed Web Worker Offloading from the featured list.
 
 ### Speculation Rules / Speculative Loading (Core in WordPress 6.8)
 
@@ -1301,6 +1297,17 @@ WordPress 6.9 shipped in November 2025; WordPress 6.9.4 was the current patch re
 - **Query/cache changes:** the [WordPress 6.9 Field Guide](https://make.wordpress.org/core/2025/11/25/wordpress-6-9-field-guide/) should be checked before relying on plugin code that assumes older query-cache key behavior or intercepts Core caching internals.
 
 Treat this as a delta inventory, not a substitute for measurement: verify impact on the specific site with the same baseline and rollback discipline used elsewhere in this guide.
+
+### WordPress 7.0 performance and compatibility deltas
+
+WordPress 7.0 was released on May 20, 2026 and was the current active branch verified on 2026-06-14. The most relevant 7.0 changes for this performance guide are compatibility and operational-risk changes rather than a single universal speed feature:
+
+- **PHP support baseline:** WordPress 7.0 drops support for PHP 7.2 and 7.3. The new minimum supported PHP version is 7.4.0, while PHP 8.3 remains the minimum recommended version. For performance work, treat PHP 7.4 as a compatibility floor, not an optimization target; benchmark on the production-intended PHP 8.x runtime when possible.
+- **AI Client, Abilities, and Connectors:** WordPress 7.0 adds AI/client-side abilities and a Connectors screen. These features are infrastructure and extensibility surfaces, not automatic frontend performance improvements. If a site enables AI-backed workflows or connector plugins, include external API latency, timeout behavior, credential scoping, caching, and background processing in the performance review.
+- **Modernized admin/editor surfaces:** Admin view transitions, Command Palette access, Font Library changes, Visual Revisions, and the iframed editor can improve operator experience but may change the JavaScript, CSS, and editor-plugin compatibility profile of admin screens. Re-test slow editorial workflows after upgrading.
+- **Real-time collaboration did not ship in Core 7.0:** Do not attribute editor load, memory, or server-concurrency behavior to Core real-time collaboration in WordPress 7.0. The feature was removed before release because of concerns including race conditions, server load, memory efficiency, and recurring bugs.
+
+Treat 7.0 guidance as an upgrade-review prompt: verify plugin/theme compatibility, PHP runtime behavior, admin/editor regressions, and any AI/connector network paths with measurements from the target environment.
 
 ### Auto-image-sizes and `fetchpriority`
 
@@ -1413,7 +1420,7 @@ wp cli has-command doctor && echo "doctor available"
 
 If neither command nor package install is available (common on managed hosts), fall back to Query Monitor, APM traces, host-provided profilers, or in-code `microtime()` timers.
 
-- Query Monitor (both source courses lean on this heavily);
+- Query Monitor (useful across both general and enterprise guide contexts);
 - WP-CLI profile (`wp profile stage`, `wp profile hook`) when the package is available;
 - WP-CLI doctor (`wp doctor check`) when the package is available;
 - PHP logs;
@@ -1631,6 +1638,12 @@ A performance pass is not communicated by score deltas alone. Frame the work as:
 - [WordPress 6.6 Performance Improvements](https://make.wordpress.org/core/2024/07/29/wordpress-6-6-performance-improvements/)
 - [Speculative Loading in 6.8 (March 2025)](https://make.wordpress.org/core/2025/03/06/speculative-loading-in-6-8/)
 - [WordPress 6.8 Performance Improvements (April 2025)](https://make.wordpress.org/core/2025/04/16/wordpress-6-8-performance-improvements/)
+- [WordPress 6.9 Frontend Performance Field Guide](https://make.wordpress.org/core/2025/11/18/wordpress-6-9-frontend-performance-field-guide/)
+- [WordPress 6.9 Field Guide](https://make.wordpress.org/core/2025/11/25/wordpress-6-9-field-guide/)
+- [WordPress 7.0 Field Guide](https://make.wordpress.org/core/2026/05/14/wordpress-7-0-field-guide/)
+- [Dropping support for PHP 7.2 and 7.3](https://make.wordpress.org/core/2026/01/09/dropping-support-for-php-7-2-and-7-3/)
+- [Real-time collaboration will not ship in WordPress 7.0](https://make.wordpress.org/core/2026/05/08/rtc-removed-from-7-0/)
+- [WordPress release archive](https://wordpress.org/download/releases/)
 
 ### Performance Lab and standalone plugins
 

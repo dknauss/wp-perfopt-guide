@@ -1,11 +1,13 @@
 # Enterprise WordPress Performance Operational Checklist
 
 
-> **Status:** DRAFT  
-> **Version:** 1.0  
+> **Status:** DRAFT
+> **Version:** 1.1
+> **Date:** 14 June 2026
 > **General Editor:** Dan Knauss
+> **Currency:** Last verified against WordPress 7.0 on 2026-06-14.
 
-A checklist-oriented runbook based on the WP VIP Learn **Enterprise WordPress Performance** course. Use it to diagnose, optimize, and verify performance on high-traffic WordPress sites where backend execution, cacheability, database access, object caching, traffic events, and measurement discipline matter.
+A checklist-oriented enterprise operational guide for diagnosing, optimizing, and verifying performance on high-traffic WordPress sites where backend execution, cacheability, database access, object caching, traffic events, and measurement discipline matter. It complements the general [`wordpress-performance-optimization-checklist.md`](wordpress-performance-optimization-checklist.md) by going deeper on operational scale and platform constraints.
 
 > Do not start by installing another performance plugin. Start by identifying where time is spent, whether WordPress is executing at all, and whether the response can safely be cached.
 
@@ -77,7 +79,9 @@ Run the same measurements before and after every change.
 - [ ] Capture PHP/application timing.
 - [ ] Capture database query count and slow queries.
 - [ ] Capture object-cache behavior when available.
+- [ ] Record WordPress version, PHP runtime, and database version. WordPress 7.0 requires PHP 7.4.0 or higher; PHP 8.3 remains the recommended baseline for modern performance work.
 - [ ] Capture frontend impact if browser rendering is part of the symptom.
+- [ ] Identify AI Client, Abilities API, Connectors API, or other external-service integrations that can add latency, retries, or queue pressure.
 
 Useful command:
 
@@ -495,6 +499,7 @@ Object caching reduces repeated computation and repeated database access.
 - [ ] Keep keys stable and specific.
 - [ ] Avoid excessive cache calls in tight loops.
 - [ ] Avoid storing huge objects that increase memory pressure.
+- [ ] Include `alloptions` and autoloaded-option size in object-cache review. WordPress 6.6+ uses `on`, `off`, `auto`, `auto-on`, and `auto-off` values while upgraded rows may still use `yes`/`no`; monitoring must query both vocabularies.
 - [ ] Avoid caching personalized/private data with shared keys.
 
 ---
@@ -617,7 +622,7 @@ HTTP fallback:
 * * * * * curl -s https://example.com/wp-cron.php?doing_wp_cron >/dev/null 2>&1
 ```
 
-After setting the constant, confirm scheduled events continue to clear. Roll back by commenting out the constant and clearing OPcache if the backlog grows.
+After setting the constant, confirm scheduled events continue to clear. WordPress 6.9+ spawns request-triggered WP-Cron at shutdown, which can reduce user-facing latency, but enterprise/high-traffic sites should still use a verified external runner. Roll back by commenting out the constant and clearing OPcache if the backlog grows.
 
 ## 16. AJAX, REST, sitemaps, redirects, and external requests
 
@@ -658,6 +663,9 @@ Even when backend performance is good, the browser can still feel slow.
 - [ ] Reduce long main-thread tasks.
 - [ ] Measure interaction delay after script changes.
 - [ ] Watch for AJAX calls triggered by frontend scripts after load.
+- [ ] Verify WordPress 6.3+ `fetchpriority` handling before adding platform-level hero-image preloads.
+- [ ] Review WordPress 6.8+ speculative loading rules alongside analytics, consent, personalization, and cacheability controls.
+- [ ] Re-test authenticated admin/editor workflows after WordPress 7.0 upgrades, especially custom blocks, editor extensions, Font Library workflows, Visual Revisions, and iframed-editor behavior.
 
 ---
 
@@ -672,6 +680,7 @@ High-traffic events require preparation, not just reaction.
 - [ ] Freeze risky deployments before the event.
 - [ ] Audit cacheability of campaign landing pages.
 - [ ] Remove avoidable query-string cache fragmentation.
+- [ ] Exclude authenticated, cart/checkout, preview, session-keyed, and personalized paths from speculative loading before enabling more aggressive prefetch/prerender behavior.
 - [ ] Confirm origin can survive expected cache misses.
 - [ ] Confirm monitoring and alerting are active.
 - [ ] Prepare rollback and incident contacts.
@@ -746,6 +755,7 @@ function my_custom_function() {
 - [ ] Use APM traces to find slow transactions.
 - [ ] Group by transaction type: page, admin, REST, AJAX, cron.
 - [ ] Inspect database, external service, and PHP segment timing.
+- [ ] For WordPress 7.0 AI/connectors or similar integrations, separate external API latency, retries, timeouts, queueing, credential access failures, and cacheability of generated results.
 
 Example:
 
@@ -834,95 +844,24 @@ Done means:
 
 ---
 
-## Appendix A: Modern additions (verified against WordPress 6.9.4, 2026-05-18)
-
-The WP VIP Learn Enterprise WordPress Performance course was recorded before several WordPress Core performance changes that matter at platform scale. This appendix covers them in enterprise terms. The unified developer reference at [`DEVELOPER_REFERENCE.md`](DEVELOPER_REFERENCE.md) has fuller treatment.
-
-### Options API expansion (WordPress 6.4 and 6.6)
-
-WordPress 6.4 added `wp_set_option_autoload()` and `wp_set_options_autoload()` for managing autoload state without touching the database directly. WordPress 6.6 expanded the `autoload` column to five values: `'on'`, `'off'`, `'auto'`, `'auto-on'`, `'auto-off'`. Legacy `'yes'`/`'no'` rows persist on upgraded sites.
-
-Enterprise / platform implications:
-
-- [ ] Any saved monitoring queries, dashboards, or platform health checks filtering only legacy `'yes'` autoload rows need to switch to `autoload IN ('yes', 'on', 'auto', 'auto-on')`. This is a silent miss otherwise — newly written 6.6+ options stop showing up.
-- [ ] WP 6.6 automatically marks options larger than ~150 KB as `'auto-off'`. Custom platform code that writes large options with explicit autoload should respect this signal rather than fight it.
-- [ ] Site Health adds a check labeled “Autoloaded options could affect performance” at ~800 KB total autoload size. Surface this in platform telemetry alongside `alloptions` size.
-- [ ] On `alloptions` cache stampedes (the classic VIP issue), the WP 6.6 auto-skip heuristics reduce — but do not eliminate — the risk. Continue to set explicit `autoload => false` for known-large platform options.
-
-```php
-// Platform code: prefer explicit autoload over relying on heuristics.
-add_option( 'my_platform_large_option', $value, '', false );
-
-// To flip an existing option:
-wp_set_option_autoload( 'my_platform_large_option', false );
-```
-
-### Speculation Rules / Speculative Loading (WordPress 6.8)
-
-WordPress 6.8 (April 2025) merged speculative-loading support into Core via the [Speculation Rules API](https://make.wordpress.org/core/2025/03/06/speculative-loading-in-6-8/). Core's effective default is **`prefetch`** with **`conservative`** eagerness, enabled on frontend requests only when pretty permalinks are on and the user is logged out. Core does not ship a dedicated settings UI for speculation rules in 6.8; customization happens through filters such as `wp_speculation_rules_configuration` and `wp_load_speculation_rules`, plus block-level CSS classes like `no-prefetch` and `no-prerender`.
-
-The standalone [Speculative Loading plugin](https://wordpress.org/plugins/speculation-rules/) extends Core with a plugin-provided admin screen and more aggressive modes, including `prerender`. When you opt into prerender, audit analytics SDKs for prerender-aware behavior and confirm that prerendered visits do not double-count or fire third-party scripts on hidden documents.
-
-Enterprise considerations: edge cache hit ratio can rise on sites with predictable navigation patterns because prefetches may hit cache before the eventual navigation. Confirm session-keyed and personalized pages are excluded from speculative loading with Core filters, `no-prefetch` / `no-prerender` classes, or plugin-provided exclusion controls. Do not use older `data-prefetch="false"` wording as the recommended Core opt-out mechanism.
-
-### WordPress 6.9 performance deltas
-
-WordPress 6.9 shipped in November 2025; WordPress 6.9.4 was the current patch release verified on 2026-05-18. The most material 6.9 performance changes for this guide are:
-
-- **Frontend loading:** the [WordPress 6.9 Frontend Performance Field Guide](https://make.wordpress.org/core/2025/11/18/wordpress-6-9-frontend-performance-field-guide/) covers script `fetchpriority`, footer script-module printing, emoji script-module changes, block stylesheet handling, hidden-block asset omission, template enhancement output buffering, RSS feed caching, video block CLS fixes, and related frontend work.
-- **WP-Cron spawn timing:** Core now spawns WP-Cron at shutdown rather than earlier in the request lifecycle, reducing user-facing latency for request-triggered cron. Sites with a verified external cron runner remain the preferred high-traffic pattern.
-- **Query/cache changes:** the [WordPress 6.9 Field Guide](https://make.wordpress.org/core/2025/11/25/wordpress-6-9-field-guide/) should be checked before relying on plugin code that assumes older query-cache key behavior or intercepts Core caching internals.
-
-Treat this as a delta inventory, not a substitute for measurement: verify impact on the specific site with the same baseline and rollback discipline used elsewhere in this guide.
-
-### `fetchpriority` on LCP image (WordPress 6.3+)
-
-Core now sets `fetchpriority="high"` on the detected LCP image automatically. At enterprise scale this affects how the platform should advise on hero-image preload patterns:
-
-- [ ] Audit any platform-level theme/plugin that emits `<link rel="preload" as="image">` for hero images — it may now be redundant or, worse, may compete with Core’s `fetchpriority` heuristic by preloading a different candidate.
-- [ ] Confirm AMP / Block Theme combinations correctly identify the LCP candidate after 6.3.
-
-### Performance Lab plugin
-
-[Performance Lab](https://wordpress.org/plugins/performance-lab/) is the Core team's feature-plugin discovery and management layer. As features mature inside the Performance Lab ecosystem they either graduate into Core or remain as standalone plugins; the catalog rotates over time. Verify the current featured plugins on the Performance Lab plugin page before recommending any specific module.
-
-Featured plugins as of 2026-05-18 include:
-
-- **Embed Optimizer** — improves embeds that otherwise add third-party request and rendering cost.
-- **Enhanced Responsive Images** — refines responsive image sizing decisions, including lazy-loaded images.
-- **Image Placeholders** — formerly Dominant Color Images; uses a CSS background placeholder while an image loads.
-- **Image Prioritizer** — automates `fetchpriority` and related loading decisions for likely LCP candidates.
-- **Instant Back/Forward** — improves browser back/forward-cache behavior where applicable.
-- **Modern Image Formats** — formerly named for WebP uploads; stores additional WebP/AVIF versions of uploaded images and serves modern formats to supporting browsers.
-- **Optimization Detective** — opt-in real-user measurement that informs Core/Performance Lab decisions; dependency for some other featured plugins.
-- **Performant Translations**, **Speculative Loading**, and **View Transitions** — additional featured plugins whose relevance depends on the site and rollout risk.
-
-Recommendation: evaluate Performance Lab on staging, look at the current Featured Plugins list at the verification time, and adopt specific plugins by name only when they match the site's documented performance need.
-
-### Core Web Vitals: INP replaced FID (March 2024)
-
-INP is now the responsiveness metric of record, replacing FID. Thresholds at the 75th percentile across real users:
-
-| Metric | Good | Needs improvement | Poor |
-|---|---:|---:|---:|
-| LCP | <= 2.5 s | 2.5–4.0 s | > 4.0 s |
-| INP | <= 200 ms | 200–500 ms | > 500 ms |
-| CLS | <= 0.1 | 0.1–0.25 | > 0.25 |
-
-Enterprise platform reporting should retire FID dashboards and ensure RUM SDKs report INP. INP is more sensitive to JavaScript main-thread work than FID was, so customer-success conversations about “suddenly worse mobile” often trace to long-running scripts that FID would not have penalized.
-
-### Editorial correction to source lesson
-
-WP VIP Learn lesson 34 (WP Cron) shows the cron URL as `http://yourdomain.com/wp-cron.php?doing_wp_cron`. That is insecure for any modern production site — credentials, cookies, and the WP-Cron token would travel in cleartext. Use `https://` matching the site’s canonical scheme. (This operational checklist at §15 already uses HTTPS.)
-
-### References
+## References
 
 - [Options API: Disabling autoload for large options (Make WP Core)](https://make.wordpress.org/core/2024/06/18/options-api-disabling-autoload-for-large-options/)
 - [New option functions in 6.4 (Make WP Core)](https://make.wordpress.org/core/2023/10/17/new-option-functions-in-6-4/)
 - [WordPress 6.6 Performance Improvements](https://make.wordpress.org/core/2024/07/29/wordpress-6-6-performance-improvements/)
 - [Speculative Loading in 6.8](https://make.wordpress.org/core/2025/03/06/speculative-loading-in-6-8/)
 - [WordPress 6.8 Performance Improvements](https://make.wordpress.org/core/2025/04/16/wordpress-6-8-performance-improvements/)
+- [WordPress 6.9 Frontend Performance Field Guide](https://make.wordpress.org/core/2025/11/18/wordpress-6-9-frontend-performance-field-guide/)
+- [WordPress 6.9 Field Guide](https://make.wordpress.org/core/2025/11/25/wordpress-6-9-field-guide/)
+- [WordPress 7.0 Field Guide](https://make.wordpress.org/core/2026/05/14/wordpress-7-0-field-guide/)
+- [Dropping support for PHP 7.2 and 7.3](https://make.wordpress.org/core/2026/01/09/dropping-support-for-php-7-2-and-7-3/)
+- [Real-time collaboration will not ship in WordPress 7.0](https://make.wordpress.org/core/2026/05/08/rtc-removed-from-7-0/)
+- [WordPress release archive](https://wordpress.org/download/releases/)
 - [`wp_set_option_autoload()`](https://developer.wordpress.org/reference/functions/wp_set_option_autoload/)
 - [Performance Lab plugin](https://wordpress.org/plugins/performance-lab/)
 - [web.dev — Interaction to Next Paint](https://web.dev/articles/inp)
 - [Introducing INP to Core Web Vitals (Google Search Central)](https://developers.google.com/search/blog/2023/05/introducing-inp)
+
+### Source note
+
+One WP VIP Learn WP-Cron lesson shows the cron URL as `http://yourdomain.com/wp-cron.php?doing_wp_cron`. That is insecure for any modern production site — credentials, cookies, and the WP-Cron token would travel in cleartext. Use `https://` matching the site’s canonical scheme. This operational checklist at §15 already uses HTTPS.

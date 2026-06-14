@@ -1,9 +1,11 @@
 # WordPress Transients and Persistent Object Cache Reference
 
 
-> **Status:** DRAFT  
-> **Version:** 1.0  
+> **Status:** DRAFT
+> **Version:** 1.1
+> **Date:** 14 June 2026
 > **General Editor:** Dan Knauss
+> **Currency:** API behavior and operational guidance last reviewed for WordPress 7.0 on 2026-06-14.
 
 A practical reference for understanding how the WordPress Transients API behaves with and without a persistent object cache, and how that affects performance, database growth, and enterprise-scale WordPress operations.
 
@@ -399,7 +401,7 @@ For enterprise/high-traffic sites:
 
 ---
 
-## 13. Combined guidance from Remkus, WP VIP, WordPress.org, and the handbook PR
+## 13. Source notes: Remkus, WP VIP, WordPress.org, and the handbook PR
 
 ### Remkus / Make WordPress Fast
 

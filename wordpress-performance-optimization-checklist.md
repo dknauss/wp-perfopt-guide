@@ -1,18 +1,22 @@
 # WordPress Performance Optimization Checklist
 
 
-> **Status:** DRAFT  
-> **Version:** 1.0  
+> **Status:** DRAFT
+> **Version:** 1.1
+> **Date:** 14 June 2026
 > **General Editor:** Dan Knauss
+> **Currency:** Last verified against WordPress 7.0 on 2026-06-14.
 
 A practical, operations-oriented guide for improving WordPress performance without guessing. Work through this in order: measure first, reduce unnecessary work, cache safely, optimize delivery, then verify with the same measurements.
+
+This general guide is especially focused on the transport layer and a debugging/analysis process that follows the signal through the stack, narrowing the pattern, and gathering evidence before acting. It is a discipline of refusing to optimize from guesswork. The decision trees in §22 of this checklist implement this explicitly; the unified developer reference develops the same discipline in §27.
 
 > Principle: performance is not a score. Optimize for the user experience: fast response, quick interactivity, stable layout, and predictable behavior across real devices and networks.
 
 
-## Companion cross-reference: WP VIP Enterprise Performance
+## Companion cross-reference: Enterprise operational checklist
 
-Use this checklist as the broad WordPress/operator workflow. When the target site is enterprise-scale, VIP-hosted, or dominated by backend/database/cache behavior, cross-check the companion WP VIP runbook at [`enterprise-performance-operational-checklist.md`](enterprise-performance-operational-checklist.md). It goes deeper on `WP_Query`, `NOT IN`, `LIKE`, post meta, taxonomies, `EXPLAIN`, Elasticsearch/offloaded search, object-cache race conditions, cache stampedes, load testing, New Relic/APM, and high-traffic events.
+Use this checklist as the broad WordPress/operator workflow. When the target site is enterprise-scale, platform-governed, VIP-hosted, or dominated by backend/database/cache behavior, cross-check the companion enterprise operational checklist at [`enterprise-performance-operational-checklist.md`](enterprise-performance-operational-checklist.md). It goes deeper on `WP_Query`, `NOT IN`, `LIKE`, post meta, taxonomies, `EXPLAIN`, Elasticsearch/offloaded search, object-cache race conditions, cache stampedes, load testing, New Relic/APM, and high-traffic events.
 
 ---
 
@@ -178,7 +182,7 @@ curl -w "namelookup:%{time_namelookup} connect:%{time_connect} tls:%{time_appcon
 Good hosting reduces the amount of work WordPress has to fight through.
 
 - [ ] Confirm adequate PHP workers for traffic and dynamic pages.
-- [ ] Use a supported PHP version and modern database version.
+- [ ] Use a supported PHP version and modern database version. WordPress 7.0 requires PHP 7.4.0 or higher; PHP 8.3 remains the recommended baseline for modern performance work.
 - [ ] Enable PHP OPcache.
 - [ ] Verify memory limits are sufficient but not hiding runaway code.
 - [ ] Check error logs for repeated warnings, fatals, retries, or timeouts.
@@ -267,6 +271,7 @@ A CDN helps when it caches the right assets and avoids unnecessary trips to orig
 - [ ] Use file versioning or hashed filenames for assets that change.
 - [ ] Configure HTML cache rules intentionally; do not rely on defaults blindly.
 - [ ] Track cache hit ratio.
+- [ ] Account for WordPress 6.8+ speculative loading: Core prefetches conservatively for logged-out frontend navigation when eligible, while prerender requires opt-in/plugin/custom configuration. Exclude authenticated, cart/checkout, preview, session-keyed, and personalized paths before widening speculation rules.
 - [ ] Investigate low hit ratio:
   - [ ] too many query strings
   - [ ] unnecessary cookies
@@ -292,6 +297,7 @@ Optimize what WordPress loads and executes for each request.
 - [ ] Move heavy work to background jobs where appropriate.
 - [ ] Cache expensive computed results.
 - [ ] Avoid remote HTTP calls during page generation unless cached and timeout-protected.
+- [ ] Inventory WordPress 7.0 AI Client, Abilities API, or Connectors API integrations; measure external API latency, timeouts, retries, queueing, and cache behavior before treating those workflows as production-safe.
 
 WP-CLI profiling examples:
 
@@ -330,12 +336,12 @@ Autoloaded options:
 
 - [ ] Measure total autoloaded option size.
 - [ ] Identify the largest autoloaded options.
-- [ ] Set large rarely-used options to `autoload = off` where safe (WordPress 6.6+ vocabulary; older rows may still use `yes`/`no` — see Appendix A).
+- [ ] Set large rarely-used options to `autoload = off` where safe using `wp_set_option_autoload()`, `wp_set_options_autoload()`, or `wp option set-autoload`; older rows may still use legacy `yes`/`no` values.
 - [ ] Remove orphaned plugin/theme options only after backup and verification.
 
 Useful SQL inspection examples (updated for WordPress 6.6+):
 
-> **Note:** As of WordPress 6.6 (June 2024), the `autoload` column can hold five values: `'on'`, `'off'`, `'auto'`, `'auto-on'`, `'auto-off'`. Older rows still use `'yes'`/`'no'`. Filters that only look for `'yes'` miss everything written under the new vocabulary. The queries below cover both. See the **Modern additions** appendix at the end of this checklist for the full 6.6 / 6.8 update list.
+> **Note:** As of WordPress 6.6 (June 2024), the `autoload` column can hold five values: `'on'`, `'off'`, `'auto'`, `'auto-on'`, `'auto-off'`. Older rows still use `'yes'`/`'no'`. Filters that only look for `'yes'` miss everything written under the new vocabulary. The queries below cover both. Site Health also warns when total autoloaded option size crosses the current threshold, so include that warning in routine performance review.
 
 ```sql
 SELECT option_name, LENGTH(option_value) AS size, autoload
@@ -431,11 +437,11 @@ Images are often the largest contributor to LCP and page weight.
 - [ ] Ensure LCP image is not lazy-loaded.
 - [ ] Serve correctly sized images using `srcset` and `sizes`.
 - [ ] Compress images appropriately.
-- [ ] Use modern formats where supported: WebP or AVIF.
+- [ ] Use modern formats where supported: WebP or AVIF. When using the Performance Lab ecosystem, evaluate **Modern Image Formats** and related image feature plugins on staging before production rollout.
 - [ ] Set explicit width/height to avoid layout shift.
 - [ ] Lazy-load below-the-fold images.
 - [ ] Avoid huge background images for critical hero content unless intentionally optimized.
-- [ ] Preload only the true critical LCP image when needed.
+- [ ] Preload only the true critical LCP image when needed. WordPress 6.3+ can add `fetchpriority="high"` to the detected LCP image; verify generated markup before adding manual hero preloads.
 
 Example:
 
@@ -469,6 +475,7 @@ JavaScript:
 - [ ] Defer non-critical scripts.
 - [ ] Delay third-party scripts until interaction when appropriate.
 - [ ] Avoid long main-thread tasks.
+- [ ] Re-test admin/editor workflows after WordPress 7.0 upgrades, especially sites with custom blocks, editor plugins, heavy Font Library use, or workflows affected by the modernized dashboard and iframed editor.
 - [ ] Split heavy functionality by page/template.
 - [ ] Prevent duplicate libraries from loading.
 
@@ -550,7 +557,7 @@ Default WordPress behavior is safe and flexible, but not always optimal for ever
 - [ ] Disable XML-RPC if not needed.
 - [ ] Move WP-Cron to real server cron on production/high-traffic sites.
 - [ ] Confirm debug settings are production-safe.
-- [ ] Keep core, plugins, and themes updated after testing.
+- [ ] Keep core, plugins, and themes updated after testing. Treat WordPress 7.0 as the current compatibility baseline and test upgrades against the production-intended PHP 8.x runtime when possible.
 
 Production `wp-config.php` review:
 
@@ -576,6 +583,7 @@ Scheduled work should not surprise frontend visitors.
 - [ ] Deduplicate scheduled events.
 - [ ] Check failed Action Scheduler jobs.
 - [ ] For WooCommerce, monitor Action Scheduler queue length and failure rate.
+- [ ] Account for WordPress 6.9+ behavior: request-triggered WP-Cron is spawned at shutdown, which can reduce user-facing latency, but high-traffic sites should still use a verified external runner.
 - [ ] Batch long-running jobs.
 - [ ] Add locking to prevent overlapping expensive jobs.
 
@@ -651,6 +659,7 @@ Optimization is incomplete without ongoing monitoring.
 - [ ] Monitor object cache health.
 - [ ] Monitor cron/action queues.
 - [ ] Monitor CDN cache hit ratio.
+- [ ] Monitor speculation-rule changes, Performance Lab feature-plugin rollouts, and AI/connector integrations as performance-affecting changes, not just feature changes.
 - [ ] Keep a change log of performance-related changes.
 
 Client/stakeholder reporting should explain experience, not just scores:
@@ -767,92 +776,20 @@ A performance optimization pass is done when:
 
 ---
 
-## Appendix A: Modern additions (verified against WordPress 6.9.4, 2026-05-18)
-
-The Make WordPress Fast course was recorded before several material WordPress Core performance changes shipped. This appendix covers the most important ones an operator should fold into the checklist above. The unified developer reference at [`DEVELOPER_REFERENCE.md`](DEVELOPER_REFERENCE.md) covers each topic in more depth.
-
-### Options API: new autoload functions (WordPress 6.4)
-
-WordPress 6.4 introduced first-class functions for managing the autoload state of options. Hand-editing the `autoload` column was always risky; these functions invalidate the right caches and respect the API:
-
-```php
-wp_set_option_autoload( 'my_huge_option', false );        // singular
-wp_set_options_autoload( array( 'opt_a', 'opt_b' ), false ); // bulk
-```
-
-Operator workflow:
-
-- [ ] When you find a fat option in §8, flip it via `wp_set_option_autoload()` (or `wp option set-autoload` in WP-CLI), not via raw SQL.
-- [ ] Confirm the change with the autoload-size query in §8 — total `autoload_bytes` should drop.
-
-### Autoload vocabulary expansion (WordPress 6.6)
-
-As of WordPress 6.6 the `autoload` column holds one of five values: `'on'`, `'off'`, `'auto'`, `'auto-on'`, `'auto-off'`. Old `'yes'`/`'no'` rows persist on upgraded sites and are treated as `'on'`/`'off'`. WordPress 6.6 also added automatic skip-autoload for options larger than ~150 KB by default.
-
-Operator workflow:
-
-- [ ] Replace any saved query, dashboard, or monitor that matches only the legacy `'yes'` autoload value with `WHERE autoload IN ('yes', 'on', 'auto', 'auto-on')`.
-- [ ] Check Site Health -> Performance for the “Autoloaded options could affect performance” warning. It triggers at ~800 KB total autoload size.
-- [ ] On sites you suspect have stale options, prefer the API/CLI fix over raw deletes; orphaned-option cleanup is a separate maintenance task and should still be done with backups.
-
-### Speculation Rules / Speculative Loading (WordPress 6.8)
-
-WordPress 6.8 (April 2025) merged speculative-loading support into Core via the [Speculation Rules API](https://make.wordpress.org/core/2025/03/06/speculative-loading-in-6-8/). Core's effective default is **`prefetch`** with **`conservative`** eagerness, enabled on frontend requests only when pretty permalinks are on and the user is logged out. Core does not ship a dedicated settings UI for speculation rules in 6.8; customization happens through filters such as `wp_speculation_rules_configuration` and `wp_load_speculation_rules`, plus block-level CSS classes like `no-prefetch` and `no-prerender`.
-
-The standalone [Speculative Loading plugin](https://wordpress.org/plugins/speculation-rules/) extends Core with a plugin-provided admin screen and more aggressive modes, including `prerender`. When you opt into prerender, audit analytics SDKs for prerender-aware behavior and confirm that prerendered visits do not double-count or fire third-party scripts on hidden documents.
-
-Enterprise considerations: edge cache hit ratio can rise on sites with predictable navigation patterns because prefetches may hit cache before the eventual navigation. Confirm session-keyed and personalized pages are excluded from speculative loading with Core filters, `no-prefetch` / `no-prerender` classes, or plugin-provided exclusion controls. Do not use older `data-prefetch="false"` wording as the recommended Core opt-out mechanism.
-
-### Performance Lab plugin
-
-[Performance Lab](https://wordpress.org/plugins/performance-lab/) is the Core team's feature-plugin discovery and management layer. As features mature inside the Performance Lab ecosystem they either graduate into Core or remain as standalone plugins; the catalog rotates over time. Verify the current featured plugins on the Performance Lab plugin page before recommending any specific module.
-
-Featured plugins as of 2026-05-18 include:
-
-- **Embed Optimizer** — improves embeds that otherwise add third-party request and rendering cost.
-- **Enhanced Responsive Images** — refines responsive image sizing decisions, including lazy-loaded images.
-- **Image Placeholders** — formerly Dominant Color Images; uses a CSS background placeholder while an image loads.
-- **Image Prioritizer** — automates `fetchpriority` and related loading decisions for likely LCP candidates.
-- **Instant Back/Forward** — improves browser back/forward-cache behavior where applicable.
-- **Modern Image Formats** — formerly named for WebP uploads; stores additional WebP/AVIF versions of uploaded images and serves modern formats to supporting browsers.
-- **Optimization Detective** — opt-in real-user measurement that informs Core/Performance Lab decisions; dependency for some other featured plugins.
-- **Performant Translations**, **Speculative Loading**, and **View Transitions** — additional featured plugins whose relevance depends on the site and rollout risk.
-
-Recommendation: evaluate Performance Lab on staging, look at the current Featured Plugins list at the verification time, and adopt specific plugins by name only when they match the site's documented performance need.
-
-### WordPress 6.9 performance deltas
-
-WordPress 6.9 shipped in November 2025; WordPress 6.9.4 was the current patch release verified on 2026-05-18. The most material 6.9 performance changes for this guide are:
-
-- **Frontend loading:** the [WordPress 6.9 Frontend Performance Field Guide](https://make.wordpress.org/core/2025/11/18/wordpress-6-9-frontend-performance-field-guide/) covers script `fetchpriority`, footer script-module printing, emoji script-module changes, block stylesheet handling, hidden-block asset omission, template enhancement output buffering, RSS feed caching, video block CLS fixes, and related frontend work.
-- **WP-Cron spawn timing:** Core now spawns WP-Cron at shutdown rather than earlier in the request lifecycle, reducing user-facing latency for request-triggered cron. Sites with a verified external cron runner remain the preferred high-traffic pattern.
-- **Query/cache changes:** the [WordPress 6.9 Field Guide](https://make.wordpress.org/core/2025/11/25/wordpress-6-9-field-guide/) should be checked before relying on plugin code that assumes older query-cache key behavior or intercepts Core caching internals.
-
-Treat this as a delta inventory, not a substitute for measurement: verify impact on the specific site with the same baseline and rollback discipline used elsewhere in this guide.
-
-### LCP and `fetchpriority` (WordPress 6.3+)
-
-WordPress 6.3 added automatic `fetchpriority="high"` on the LCP image when Core can identify one. Verify in DevTools before adding manual `<link rel="preload">` for the hero image — Core may already have done it for you.
-
-### Core Web Vitals thresholds (post-INP, March 2024)
-
-For reference when reading any current performance report:
-
-| Metric | Good | Needs improvement | Poor |
-|---|---:|---:|---:|
-| LCP | <= 2.5 s | 2.5–4.0 s | > 4.0 s |
-| INP | <= 200 ms | 200–500 ms | > 500 ms |
-| CLS | <= 0.1 | 0.1–0.25 | > 0.25 |
-
-INP replaced FID as a Core Web Vital on March 12, 2024. Any report still talking about FID is operating on a 2023 definition.
-
-### References
+## References
 
 - [Options API: Disabling autoload for large options (Make WP Core, June 2024)](https://make.wordpress.org/core/2024/06/18/options-api-disabling-autoload-for-large-options/)
 - [New option functions in 6.4 (Make WP Core)](https://make.wordpress.org/core/2023/10/17/new-option-functions-in-6-4/)
 - [WordPress 6.6 Performance Improvements](https://make.wordpress.org/core/2024/07/29/wordpress-6-6-performance-improvements/)
 - [Speculative Loading in 6.8 (Make WP Core)](https://make.wordpress.org/core/2025/03/06/speculative-loading-in-6-8/)
 - [WordPress 6.8 Performance Improvements](https://make.wordpress.org/core/2025/04/16/wordpress-6-8-performance-improvements/)
+- [WordPress 6.9 Frontend Performance Field Guide](https://make.wordpress.org/core/2025/11/18/wordpress-6-9-frontend-performance-field-guide/)
+- [WordPress 6.9 Field Guide](https://make.wordpress.org/core/2025/11/25/wordpress-6-9-field-guide/)
+- [WordPress 7.0 Field Guide](https://make.wordpress.org/core/2026/05/14/wordpress-7-0-field-guide/)
+- [Dropping support for PHP 7.2 and 7.3](https://make.wordpress.org/core/2026/01/09/dropping-support-for-php-7-2-and-7-3/)
+- [Real-time collaboration will not ship in WordPress 7.0](https://make.wordpress.org/core/2026/05/08/rtc-removed-from-7-0/)
+- [WordPress release archive](https://wordpress.org/download/releases/)
 - [`wp_set_option_autoload()`](https://developer.wordpress.org/reference/functions/wp_set_option_autoload/)
 - [Performance Lab plugin](https://wordpress.org/plugins/performance-lab/)
 - [web.dev — Interaction to Next Paint](https://web.dev/articles/inp)
+- [Introducing INP to Core Web Vitals (Google Search Central)](https://developers.google.com/search/blog/2023/05/introducing-inp)
