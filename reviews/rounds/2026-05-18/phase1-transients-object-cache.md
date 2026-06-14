@@ -1,10 +1,10 @@
 # Phase 1 Review Findings
 
-Scope: `/Users/danknauss/Developer/GitHub/wp-perfopt-guide/REFERENCE-WP-Transients-Persistent-Object-Cache.md`
+Scope: `REFERENCE-WP-Transients-Persistent-Object-Cache.md`
 
 ## 1) `wp_cache_add()` lock is not a cross-request lock without a persistent cache
 
-- **Document:** `/Users/danknauss/Developer/GitHub/wp-perfopt-guide/REFERENCE-WP-Transients-Persistent-Object-Cache.md`
+- **Document:** `REFERENCE-WP-Transients-Persistent-Object-Cache.md`
 - **Location:** Section 8, “Race conditions and cache stampedes” (`lines 240-260`)
 - **Finding:** The lock example uses `wp_cache_add()` as if it coordinates concurrent requests generally. In default WordPress, the object cache is non-persistent and request-local, so this lock does not protect against stampedes across page loads unless a persistent shared object cache is active.
 - **Severity:** High
@@ -13,7 +13,7 @@ Scope: `/Users/danknauss/Developer/GitHub/wp-perfopt-guide/REFERENCE-WP-Transien
 
 ## 2) The regeneration example can cache `null` and poison the transient
 
-- **Document:** `/Users/danknauss/Developer/GitHub/wp-perfopt-guide/REFERENCE-WP-Transients-Persistent-Object-Cache.md`
+- **Document:** `REFERENCE-WP-Transients-Persistent-Object-Cache.md`
 - **Location:** Section 5, “Expiration semantics” code block (`lines 156-170`)
 - **Finding:** The example calls `json_decode()` and writes the result to the transient without validating the payload. If the upstream body is malformed or empty, `json_decode()` returns `null`, which is then cached. Subsequent calls will no longer enter the `false === $data` miss path, so the transient can hold a broken value until it expires.
 - **Severity:** Medium

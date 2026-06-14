@@ -1,7 +1,7 @@
 # WordPress Transients and Persistent Object Cache Reference
 
 
-> **Status:** DRAFT
+> **Status:** Released
 > **Version:** 1.1
 > **Date:** 14 June 2026
 > **General Editor:** Dan Knauss

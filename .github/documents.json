@@ -10,7 +10,7 @@
       "WP-CLI"
     ],
     "version": "1.2",
-    "status": "DRAFT",
+    "status": "Released",
     "general_editor": "Dan Knauss",
     "intro_marker": "Audience:"
   },
@@ -25,7 +25,7 @@
       "Definition of done"
     ],
     "version": "1.1",
-    "status": "DRAFT",
+    "status": "Released",
     "general_editor": "Dan Knauss",
     "intro_marker": "A practical, operations-oriented guide"
   },
@@ -40,7 +40,7 @@
       "Performance alerting"
     ],
     "version": "1.1",
-    "status": "DRAFT",
+    "status": "Released",
     "general_editor": "Dan Knauss",
     "intro_marker": "A checklist-oriented enterprise operational guide"
   },
@@ -55,7 +55,7 @@
       "Operational checklist"
     ],
     "version": "1.1",
-    "status": "DRAFT",
+    "status": "Released",
     "general_editor": "Dan Knauss",
     "intro_marker": "A practical reference for understanding"
   },
@@ -69,8 +69,8 @@
       "Object cache failure or cache stampede",
       "Recovery verification checklist"
     ],
-    "version": "0.1",
-    "status": "DRAFT",
+    "version": "1.0",
+    "status": "Released",
     "general_editor": "Dan Knauss",
     "intro_marker": "Use this runbook when"
   }

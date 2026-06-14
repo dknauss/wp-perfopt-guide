@@ -1,7 +1,7 @@
 # WordPress Performance Incident Runbook
 
-> **Status:** DRAFT
-> **Version:** 0.1
+> **Status:** Released
+> **Version:** 1.0
 > **Date:** 14 June 2026
 > **General Editor:** Dan Knauss
 > **Currency:** Last reviewed against WordPress 7.0 on 2026-06-14.
@@ -28,7 +28,12 @@ export INCIDENT_ID="[CUSTOMIZE: YYYYMMDD-short-name]"
 export EVIDENCE_DIR="./incident-${INCIDENT_ID}"
 mkdir -p "$EVIDENCE_DIR"
 
+# SETUP / LOCAL WRITE: creates only the local evidence directory.
+# READ-ONLY: remaining setup commands inspect the selected WordPress site.
+CURL_TIMEOUT_ARGS=(--connect-timeout 5 --max-time 30)
+
 # Site-specific WP-CLI arguments. Keep --url for multisite and harmless single-site parity.
+WP_CLI_BASE_ARGS=(--path="$WP_PATH")
 WP_CLI_SITE_ARGS=(--path="$WP_PATH" --url="$SITE_URL")
 
 # Derive the affected site's options table instead of hand-typing wp_options/wp_2_options.
@@ -49,7 +54,7 @@ Assumptions:
 - WP-CLI is available as `wp`.
 - Commands run with a user that can read the WordPress install and, where needed, query the database.
 - Production write operations require explicit incident lead approval.
-- Site-specific WP-CLI commands use `WP_CLI_SITE_ARGS`; for multisite this targets the affected blog with `--url="$SITE_URL"`.
+- Site-specific WP-CLI commands use `WP_CLI_SITE_ARGS`; for multisite this targets the affected blog with `--url="$SITE_URL"`. Profiling commands that intentionally request `TARGET_URL` use `WP_CLI_BASE_ARGS` plus the command-specific `--url="$TARGET_URL"` to avoid passing two `--url` values.
 - `OPTIONS_TABLE` is derived from `wp db prefix` for the selected site and verified before raw SQL is used. For network-wide checks, label the command as network-wide before running it.
 
 ## Severity triggers
@@ -59,6 +64,15 @@ Assumptions:
 | SEV1 | Public site broadly unavailable, checkout/account impossible, sustained origin overload, database unavailable | Immediate incident response, platform/hosting escalation, change freeze |
 | SEV2 | Major template or admin workflow slow for many users, cache hit ratio collapse, PHP workers saturated | Incident response with focused mitigation and stakeholder updates |
 | SEV3 | Degraded subset of URLs, single integration slow, Core Web Vitals regression without outage | Triage, measured fix, normal change controls unless risk grows |
+
+## Communications cadence
+
+- Communications owner: [CUSTOMIZE: role/name assigned in the incident channel].
+- SEV1: update stakeholders every 15 minutes until mitigated, then every 30 minutes until resolved.
+- SEV2: update stakeholders every 30 minutes until mitigated, then hourly until resolved.
+- SEV3: update at start, material state changes, mitigation, and closeout.
+- Minimum update contents: severity, user impact, affected paths, current hypothesis, mitigation in progress, next decision time, and risks or help needed.
+- Channels: [CUSTOMIZE: incident channel, status page, customer-support channel, executive/internal update path].
 
 ## Safety rules
 
@@ -71,7 +85,7 @@ Assumptions:
 
 ## First 10 minutes
 
-1. Assign roles: incident lead, WordPress engineer, platform/hosting engineer, communications owner.
+1. Assign roles: incident lead, WordPress engineer, platform/hosting engineer, communications owner, and stakeholder update cadence.
 2. Confirm user impact and severity.
 3. Freeze unrelated deploys, cache-rule changes, and plugin/theme updates.
 4. Capture response headers and timings for one affected URL and one known-good URL into `EVIDENCE_DIR`.
@@ -87,6 +101,7 @@ Assumptions:
 - Owner: [CUSTOMIZE: Incident lead]
 - Last Tested: [CUSTOMIZE: YYYY-MM-DD]
 - Review Cadence: Quarterly
+- Estimated Time: 10 minutes
 - Last Drill Date: [CUSTOMIZE: YYYY-MM-DD / N/A]
 
 ### Purpose
@@ -105,11 +120,11 @@ Establish the incident scope, preserve evidence, and decide which deeper procedu
 date -u
 printf 'Incident: %s\nSite: %s\nTarget: %s\n' "$INCIDENT_ID" "$SITE_URL" "$TARGET_URL"
 
-curl -sS -o /dev/null -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-target.txt" \
+curl -sS "${CURL_TIMEOUT_ARGS[@]}" -o /dev/null -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-target.txt" \
   -w 'target dns:%{time_namelookup} connect:%{time_connect} tls:%{time_appconnect} ttfb:%{time_starttransfer} total:%{time_total} code:%{http_code}\n' \
   "$TARGET_URL"
 
-curl -sS -o /dev/null -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-known-good.txt" \
+curl -sS "${CURL_TIMEOUT_ARGS[@]}" -o /dev/null -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-known-good.txt" \
   -w 'known_good dns:%{time_namelookup} connect:%{time_connect} tls:%{time_appconnect} ttfb:%{time_starttransfer} total:%{time_total} code:%{http_code}\n' \
   "$GOOD_URL"
 
@@ -155,6 +170,7 @@ Expected: both checks print success messages.
 - Owner: [CUSTOMIZE: WordPress engineer]
 - Last Tested: [CUSTOMIZE: YYYY-MM-DD]
 - Review Cadence: Quarterly
+- Estimated Time: 20 minutes
 - Last Drill Date: [CUSTOMIZE: YYYY-MM-DD / N/A]
 
 ### Purpose
@@ -171,7 +187,7 @@ Determine whether high anonymous-page TTFB is caused by cache miss/bypass, trans
 
 ```bash
 for i in 1 2 3; do
-  curl -sS -o /dev/null -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-anon-${i}.txt" \
+  curl -sS "${CURL_TIMEOUT_ARGS[@]}" -o /dev/null -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-anon-${i}.txt" \
     -w "run:${i} dns:%{time_namelookup} connect:%{time_connect} tls:%{time_appconnect} ttfb:%{time_starttransfer} total:%{time_total} code:%{http_code}\n" \
     "$TARGET_URL"
 done
@@ -198,7 +214,7 @@ No rollback is required for the default read-only checks. If the optional expire
 ### Verification
 
 ```bash
-curl -sS -o /dev/null -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-verify.txt" \
+curl -sS "${CURL_TIMEOUT_ARGS[@]}" -o /dev/null -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-verify.txt" \
   -w 'ttfb:%{time_starttransfer} total:%{time_total} code:%{http_code}\n' \
   "$TARGET_URL"
 
@@ -223,6 +239,7 @@ Expected: cacheable anonymous pages show an intentional cache status and improve
 - Owner: [CUSTOMIZE: WordPress engineer]
 - Last Tested: [CUSTOMIZE: YYYY-MM-DD]
 - Review Cadence: Quarterly
+- Estimated Time: 30 minutes
 - Last Drill Date: [CUSTOMIZE: YYYY-MM-DD / N/A]
 
 ### Purpose
@@ -240,8 +257,10 @@ Diagnose slow dynamic requests that cannot be solved by public full-page caching
 ```bash
 if wp "${WP_CLI_SITE_ARGS[@]}" cli has-command profile; then
   echo "profile available"
-  wp "${WP_CLI_SITE_ARGS[@]}" profile stage --url="$TARGET_URL"
-  wp "${WP_CLI_SITE_ARGS[@]}" profile hook --url="$TARGET_URL" --all
+  # Use WP_CLI_BASE_ARGS here because wp profile uses --url as the profiled request URL.
+  # TARGET_URL must be the affected site URL, which also selects the correct multisite blog.
+  wp "${WP_CLI_BASE_ARGS[@]}" profile stage --url="$TARGET_URL"
+  wp "${WP_CLI_BASE_ARGS[@]}" profile hook --url="$TARGET_URL" --all
 else
   echo "profile not installed"
 fi
@@ -272,11 +291,14 @@ No rollback is required for profiling. If an approved mitigation disables a plug
 ### Verification
 
 ```bash
-curl -sS "${CURL_AUTH_ARGS[@]}" -o "$EVIDENCE_DIR/body-${INCIDENT_ID}-dynamic-verify.txt" -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-dynamic-verify.txt" \
+curl -sS "${CURL_TIMEOUT_ARGS[@]}" "${CURL_AUTH_ARGS[@]}" -o "$EVIDENCE_DIR/body-${INCIDENT_ID}-dynamic-verify.txt" -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-dynamic-verify.txt" \
   -w 'ttfb:%{time_starttransfer} total:%{time_total} code:%{http_code}\n' \
   "$TARGET_URL"
 
-grep -E "^HTTP/.* ${EXPECTED_STATUS}" "$EVIDENCE_DIR/headers-${INCIDENT_ID}-dynamic-verify.txt" || true
+if ! grep -E "^HTTP/.* ${EXPECTED_STATUS}" "$EVIDENCE_DIR/headers-${INCIDENT_ID}-dynamic-verify.txt"; then
+  echo "Unexpected status for authenticated/dynamic verification" >&2
+  exit 1
+fi
 # Optional body marker check for authenticated/admin/REST/AJAX responses:
 # grep -F "[CUSTOMIZE: expected body marker]" "$EVIDENCE_DIR/body-${INCIDENT_ID}-dynamic-verify.txt"
 ```
@@ -299,6 +321,7 @@ Expected: TTFB and total time improve for the same URL, user state, authenticati
 - Owner: [CUSTOMIZE: WordPress/database engineer]
 - Last Tested: [CUSTOMIZE: YYYY-MM-DD]
 - Review Cadence: Quarterly
+- Estimated Time: 20 minutes
 - Last Drill Date: [CUSTOMIZE: YYYY-MM-DD / N/A]
 
 ### Purpose
@@ -335,8 +358,8 @@ If an approved autoload change is made, record the previous autoload value first
 # Read before changing.
 wp "${WP_CLI_SITE_ARGS[@]}" db query "SELECT option_name, autoload FROM ${OPTIONS_TABLE} WHERE option_name='[CUSTOMIZE: option_name]';"
 
-# Rollback example - choose the previous value captured above.
-wp "${WP_CLI_SITE_ARGS[@]}" option set-autoload "[CUSTOMIZE: option_name]" on
+# ROLLBACK — approval required. Choose the previous value captured above, then uncomment.
+# wp "${WP_CLI_SITE_ARGS[@]}" option set-autoload "[CUSTOMIZE: option_name]" on
 ```
 
 ### Verification
@@ -344,7 +367,7 @@ wp "${WP_CLI_SITE_ARGS[@]}" option set-autoload "[CUSTOMIZE: option_name]" on
 ```bash
 wp "${WP_CLI_SITE_ARGS[@]}" db query "SELECT SUM(LENGTH(option_value)) AS autoload_bytes FROM ${OPTIONS_TABLE} WHERE autoload IN ('yes', 'on', 'auto', 'auto-on');"
 
-curl -sS -o /dev/null -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-db-verify.txt" \
+curl -sS "${CURL_TIMEOUT_ARGS[@]}" -o /dev/null -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-db-verify.txt" \
   -w 'ttfb:%{time_starttransfer} total:%{time_total} code:%{http_code}\n' \
   "$TARGET_URL"
 ```
@@ -367,6 +390,7 @@ Expected: autoload footprint decreases if that was the target, and the affected 
 - Owner: [CUSTOMIZE: WordPress/platform engineer]
 - Last Tested: [CUSTOMIZE: YYYY-MM-DD]
 - Review Cadence: Quarterly
+- Estimated Time: 20 minutes
 - Last Drill Date: [CUSTOMIZE: YYYY-MM-DD / N/A]
 
 ### Purpose
@@ -412,7 +436,7 @@ Do not flush object cache as rollback. If optional expired-transient cleanup is 
 ### Verification
 
 ```bash
-curl -sS -o /dev/null -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-cache-verify.txt" \
+curl -sS "${CURL_TIMEOUT_ARGS[@]}" -o /dev/null -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-cache-verify.txt" \
   -w 'ttfb:%{time_starttransfer} total:%{time_total} code:%{http_code}\n' \
   "$TARGET_URL"
 ```
@@ -435,6 +459,7 @@ Expected: database load, cache errors, or TTFB improve after the approved mitiga
 - Owner: [CUSTOMIZE: WordPress operations engineer]
 - Last Tested: [CUSTOMIZE: YYYY-MM-DD]
 - Review Cadence: Quarterly
+- Estimated Time: 20 minutes
 - Last Drill Date: [CUSTOMIZE: YYYY-MM-DD / N/A]
 
 ### Purpose
@@ -504,6 +529,7 @@ Expected: read-only verification shows whether due events are decreasing under t
 - Owner: [CUSTOMIZE: WordPress engineer / integration owner]
 - Last Tested: [CUSTOMIZE: YYYY-MM-DD]
 - Review Cadence: Quarterly
+- Estimated Time: 15 minutes
 - Last Drill Date: [CUSTOMIZE: YYYY-MM-DD / N/A]
 
 ### Purpose
@@ -521,7 +547,7 @@ Identify whether external HTTP calls, WordPress 7.0 AI/connectors integrations, 
 ```bash
 wp "${WP_CLI_SITE_ARGS[@]}" plugin list --status=active --fields=name,status,version,update
 
-curl -sS -o /dev/null -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-external.txt" \
+curl -sS "${CURL_TIMEOUT_ARGS[@]}" -o /dev/null -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-external.txt" \
   -w 'ttfb:%{time_starttransfer} total:%{time_total} code:%{http_code}\n' \
   "$TARGET_URL"
 ```
@@ -545,7 +571,7 @@ If an approved feature flag, connector setting, or plugin configuration change i
 ### Verification
 
 ```bash
-curl -sS -o /dev/null -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-external-verify.txt" \
+curl -sS "${CURL_TIMEOUT_ARGS[@]}" -o /dev/null -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-external-verify.txt" \
   -w 'ttfb:%{time_starttransfer} total:%{time_total} code:%{http_code}\n' \
   "$TARGET_URL"
 ```
@@ -568,6 +594,7 @@ Expected: request time improves or APM confirms the external dependency is no lo
 - Owner: [CUSTOMIZE: Frontend/WordPress engineer]
 - Last Tested: [CUSTOMIZE: YYYY-MM-DD]
 - Review Cadence: Quarterly
+- Estimated Time: 15 minutes
 - Last Drill Date: [CUSTOMIZE: YYYY-MM-DD / N/A]
 
 ### Purpose
@@ -578,12 +605,12 @@ Triage a user-facing LCP, INP, or CLS regression without confusing frontend symp
 
 - Affected template or URL set is known.
 - Field data source is identified: CrUX, RUM, Search Console, analytics, or APM browser agent.
-- Browser tooling may be required for final diagnosis; if unavailable, capture backend/transport evidence first and escalate for browser inspection.
+- Browser tooling may be required for final diagnosis; if unavailable, capture backend/transport evidence first and escalate for browser inspection with requested artifacts: DevTools trace, Lighthouse or WebPageTest report, RUM segment, device/viewport class, and before/after screenshots when visual instability is involved.
 
 ### Commands
 
 ```bash
-curl -sS -o /dev/null -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-cwv.txt" \
+curl -sS "${CURL_TIMEOUT_ARGS[@]}" -o /dev/null -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-cwv.txt" \
   -w 'dns:%{time_namelookup} connect:%{time_connect} tls:%{time_appconnect} ttfb:%{time_starttransfer} total:%{time_total} code:%{http_code}\n' \
   "$TARGET_URL"
 
@@ -594,7 +621,7 @@ grep -E '^(HTTP/|cache-control:|Cache-Control:|age:|Age:|x-cache|X-Cache|cf-cach
 
 - Transport and TTFB data clarify whether poor LCP may start with slow document delivery.
 - Cache headers clarify whether public HTML and assets are delivered efficiently.
-- Further LCP/INP/CLS diagnosis usually requires browser traces, RUM, or lab tooling.
+- Further LCP/INP/CLS diagnosis usually requires browser traces, RUM, lab tooling, device/viewport segmentation, and screenshots for visual instability.
 
 ### Rollback
 
@@ -603,7 +630,7 @@ If the regression follows a deploy, rollback through the normal release system a
 ### Verification
 
 ```bash
-curl -sS -o /dev/null -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-cwv-verify.txt" \
+curl -sS "${CURL_TIMEOUT_ARGS[@]}" -o /dev/null -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-cwv-verify.txt" \
   -w 'ttfb:%{time_starttransfer} total:%{time_total} code:%{http_code}\n' \
   "$TARGET_URL"
 ```
@@ -615,7 +642,7 @@ Expected: backend/transport signals are healthy before handing off to browser-le
 - LCP remains poor despite fast cached TTFB.
 - INP regression correlates with third-party scripts, page-builder runtime, or new editor/frontend assets.
 - CLS is caused by ads, embeds, consent banners, notices, or late-injected personalized content.
-- Browser automation, DevTools traces, screenshots, or visual inspection are required and not available in the current session.
+- Browser automation, DevTools traces, Lighthouse/WebPageTest output, RUM segmentation, screenshots, or visual inspection are required and not available in the current session.
 
 ---
 
@@ -627,11 +654,11 @@ Expected: backend/transport signals are healthy before handing off to browser-le
 - [ ] PHP errors, database errors, and cache-service errors are not increasing.
 - [ ] Cron and queues are clearing if they were part of the incident.
 - [ ] APM/RUM/headers/logs show recovery, not just one successful manual request.
-- [ ] Stakeholders know what changed and what remains under watch.
+- [ ] Stakeholders know what changed, what remains under watch, and when the next update or closeout will happen.
 
 ## Post-incident follow-up
 
-- [ ] Write a short timeline with symptoms, trigger, detection, mitigation, and verification.
+- [ ] Write a short timeline with symptoms, trigger, detection, mitigation, stakeholder communications, and verification.
 - [ ] Open follow-up issues for root-cause fixes that were not safe during the incident.
 - [ ] Add or tune alerts for the earliest reliable signal.
 - [ ] Review cache rules, object-cache health, slow queries, cron schedules, and external dependencies touched during the incident.

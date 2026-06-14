@@ -5,6 +5,12 @@ All notable changes to this repository are documented here.
 ## Unreleased
 
 ### Changed
+- Promoted the full Performance series from `DRAFT` to `Released` status and raised the incident runbook to version 1.0 (parity with its 1.1/1.2 siblings) in both the document headers and `.github/documents.json`. Generated PDF/DOCX/EPUB artifacts must be regenerated to embed the new status/version.
+- Updated the editorial-board methodology to the current five-document series and added an Incident Runbook Reviewer role (shareable with the Enterprise Checklist Reviewer).
+- Normalized the archived 2026-05-18 review round to repo-relative/`~`-relative paths and added a historical banner noting the enterprise-checklist rename and four-to-five document expansion.
+- Clarified in `docs/current-metrics.md` that planning phase counts derive from inline `STATE.md`/`ROADMAP.md` tracking rather than materialized phase directories.
+- Aligned the PHP-version recommendation wording in `DEVELOPER_REFERENCE.md` with the rest of the series ("recommended baseline for modern performance work").
+- Added follow-up incident-runbook hardening from skill forward-testing: communications cadence, estimated procedure times, bounded curl timeouts, fail-closed dynamic verification, clarified WP-CLI profile URL targeting, and approval-gated rollback examples.
 - Hardened the incident runbook for multisite and production incident use: site-specific WP-CLI arguments, derived options-table detection, evidence directories, known-good URL capture, authenticated/dynamic verification placeholders, and approval-gated cron execution examples.
 - Tightened WordPress 6.9/7.0 chronology for the Abilities API, WP AI Client, Connectors, WordPress 6.9 release date, and WordPress 6.4/6.6 autoload API/vocabulary changes.
 - Added pull-request artifact validation coverage and release-time artifact validation before generated documents are published.

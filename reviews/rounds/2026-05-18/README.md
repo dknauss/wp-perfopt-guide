@@ -1,5 +1,7 @@
 # Editorial Review Round — 2026-05-18
 
+> **Historical record.** This round predates two later changes: the enterprise checklist was renamed from `wpvip-enterprise-performance-operational-checklist.md` to `enterprise-performance-operational-checklist.md`, and the series expanded from four documents to five with the addition of `wordpress-performance-incident-runbook.md`. Filenames and findings below are preserved as they were at the time of the round and are not updated to current paths. For the current series and review scope, see `reviews/methodology/performance-editorial-board.md` and the latest round under `reviews/rounds/`.
+
 ## Scope
 
 This round reviews the WordPress Performance Optimization Guide document set for technical accuracy, editorial consistency, source-grounded claims, and practical usefulness.
