@@ -2,7 +2,7 @@
 [![AI Authorship](https://img.shields.io/badge/AI%20authorship-disclosed-8a63d2.svg)](docs/ai-authorship.md)
 
 
-General and enterprise WordPress performance optimization guidance for developers, technical leads, and operators.
+General and enterprise WordPress performance optimization guidance for developers, technical leads, and site reliability engineers.
 
 ## Contents
 
