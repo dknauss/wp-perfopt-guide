@@ -24,6 +24,7 @@ export WP_PATH="[CUSTOMIZE: /path/to/wordpress]"
 export SITE_URL="[CUSTOMIZE: https://example.com]"
 export TARGET_URL="[CUSTOMIZE: https://example.com/problem-url/]"
 export INCIDENT_ID="[CUSTOMIZE: YYYYMMDD-short-name]"
+export OPTIONS_TABLE="[CUSTOMIZE: wp_options or wp_2_options]"
 ```
 
 Assumptions:
@@ -32,6 +33,7 @@ Assumptions:
 - Commands run with a user that can read the WordPress install and, where needed, query the database.
 - Production write operations require explicit incident lead approval.
 - Multisite incidents must add `--url="$SITE_URL"` to site-specific WP-CLI commands.
+- `OPTIONS_TABLE` must match the affected site table prefix. For multisite, use the affected blog options table such as `wp_2_options`, not always `wp_options`.
 
 ## Severity triggers
 
@@ -154,8 +156,11 @@ done
 
 grep -E '^(HTTP/|cache-control:|Cache-Control:|age:|Age:|x-cache|X-Cache|cf-cache-status|CF-Cache-Status|x-redirect-by|X-Redirect-By|set-cookie:|Set-Cookie:)' headers-${INCIDENT_ID}-anon-*.txt || true
 
-wp --path="$WP_PATH" transient delete --expired
 wp --path="$WP_PATH" cron event list --due-now
+
+# Optional write operation - run only after incident lead approval.
+# This can add database load and remove evidence of transient churn.
+# wp --path="$WP_PATH" transient delete --expired
 ```
 
 ### Expected Output
@@ -166,7 +171,7 @@ wp --path="$WP_PATH" cron event list --due-now
 
 ### Rollback
 
-No rollback is required for the read-only checks. If an approved cache-rule change is made outside this procedure, restore the previous cache rule from the CDN/host change history.
+No rollback is required for the default read-only checks. If the optional expired-transient cleanup is approved and run, there is no practical rollback for deleted expired transient rows; rely on application regeneration and continue monitoring. If an approved cache-rule change is made outside this procedure, restore the previous cache rule from the CDN/host change history.
 
 ### Verification
 
@@ -278,9 +283,9 @@ Identify whether database time is dominated by slow queries, too many queries, i
 ### Commands
 
 ```bash
-wp --path="$WP_PATH" db query "SELECT option_name, LENGTH(option_value) AS size, autoload FROM wp_options WHERE autoload IN ('yes', 'on', 'auto', 'auto-on') ORDER BY size DESC LIMIT 20;"
+wp --path="$WP_PATH" db query "SELECT option_name, LENGTH(option_value) AS size, autoload FROM ${OPTIONS_TABLE} WHERE autoload IN ('yes', 'on', 'auto', 'auto-on') ORDER BY size DESC LIMIT 20;"
 
-wp --path="$WP_PATH" db query "SELECT SUM(LENGTH(option_value)) AS autoload_bytes FROM wp_options WHERE autoload IN ('yes', 'on', 'auto', 'auto-on');"
+wp --path="$WP_PATH" db query "SELECT SUM(LENGTH(option_value)) AS autoload_bytes FROM ${OPTIONS_TABLE} WHERE autoload IN ('yes', 'on', 'auto', 'auto-on');"
 
 wp --path="$WP_PATH" db size --tables
 ```
@@ -297,7 +302,7 @@ If an approved autoload change is made, record the previous autoload value first
 
 ```bash
 # Read before changing.
-wp --path="$WP_PATH" db query "SELECT option_name, autoload FROM wp_options WHERE option_name='[CUSTOMIZE: option_name]';"
+wp --path="$WP_PATH" db query "SELECT option_name, autoload FROM ${OPTIONS_TABLE} WHERE option_name='[CUSTOMIZE: option_name]';"
 
 # Rollback example - choose the previous value captured above.
 wp --path="$WP_PATH" option set-autoload "[CUSTOMIZE: option_name]" on
@@ -306,7 +311,7 @@ wp --path="$WP_PATH" option set-autoload "[CUSTOMIZE: option_name]" on
 ### Verification
 
 ```bash
-wp --path="$WP_PATH" db query "SELECT SUM(LENGTH(option_value)) AS autoload_bytes FROM wp_options WHERE autoload IN ('yes', 'on', 'auto', 'auto-on');"
+wp --path="$WP_PATH" db query "SELECT SUM(LENGTH(option_value)) AS autoload_bytes FROM ${OPTIONS_TABLE} WHERE autoload IN ('yes', 'on', 'auto', 'auto-on');"
 
 curl -sS -o /dev/null -D "headers-${INCIDENT_ID}-db-verify.txt" \
   -w 'ttfb:%{time_starttransfer} total:%{time_total} code:%{http_code}\n' \
@@ -351,18 +356,20 @@ test -f "$WP_PATH/wp-content/object-cache.php" && echo "object-cache.php drop-in
 wp --path="$WP_PATH" cache type || true
 wp --path="$WP_PATH" cache get non_existing_key incident_probe || true
 
-wp --path="$WP_PATH" transient delete --expired
+# Optional write operation - run only after incident lead approval.
+# This can add database load and remove evidence of transient churn.
+# wp --path="$WP_PATH" transient delete --expired
 ```
 
 ### Expected Output
 
 - `object-cache.php` presence confirms a persistent object-cache drop-in is installed, but service metrics must confirm health.
 - Cache command behavior identifies whether WP-CLI can interact with the configured object cache.
-- Expired transient cleanup is safe but should not be treated as a primary incident fix.
+- Expired transient cleanup is intentionally not part of the default read-only evidence gathering. If approved, it is only a cleanup action and should not be treated as a primary incident fix.
 
 ### Rollback
 
-Do not flush object cache as rollback. If an approved cache-service restart or configuration change worsens the incident, restore the previous service/configuration state through the hosting/platform control plane.
+Do not flush object cache as rollback. If optional expired-transient cleanup is approved and run, there is no practical rollback for deleted expired transient rows; rely on application regeneration and continue monitoring. If an approved cache-service restart or configuration change worsens the incident, restore the previous service/configuration state through the hosting/platform control plane.
 
 ```bash
 # Plugin-dependent - uncomment the cache plugin(s) in use only after approval:

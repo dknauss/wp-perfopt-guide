@@ -56,21 +56,21 @@ def extract_xml_text(xml_bytes: bytes) -> str:
     return " ".join(text for text in root.itertext() if text and text.strip())
 
 
-def validate_docx(path: Path, title: str, markers: list[str]) -> str:
+def validate_docx(path: Path, title: str, markers: list[str], version: str, status: str, general_editor: str) -> str:
     ensure_exists(path, "DOCX")
     with ZipFile(path) as archive:
         for member in ("[Content_Types].xml", "_rels/.rels", "docProps/core.xml", "word/document.xml"):
             if member not in archive.namelist():
                 raise ValidationError(f"DOCX missing required member: {member}")
         document_text = extract_xml_text(archive.read("word/document.xml"))
-        assert_contains(document_text, [title, "DRAFT", "General Editor", *markers[:2]], "DOCX")
+        assert_contains(document_text, [title, "Version", version, status, "General Editor", general_editor, *markers[:2]], "DOCX")
         if "WordPress Security Hardening Guide" in document_text:
             raise ValidationError(f"DOCX contains stale running head from old template: {path}")
     print("OK   [DOCX] structure and canonical text markers found")
     return document_text
 
 
-def validate_epub(path: Path, title: str, markers: list[str]) -> str:
+def validate_epub(path: Path, title: str, markers: list[str], version: str, status: str, general_editor: str) -> str:
     ensure_exists(path, "EPUB")
     with ZipFile(path) as archive:
         mimetype = archive.read("mimetype").decode("utf-8", errors="ignore").strip()
@@ -83,7 +83,7 @@ def validate_epub(path: Path, title: str, markers: list[str]) -> str:
         if not xhtml_members:
             raise ValidationError("EPUB contains no XHTML content files")
         joined_text = " ".join(extract_xml_text(archive.read(member)) for member in xhtml_members)
-        assert_contains(joined_text, [title, "DRAFT", "General Editor", *markers[:2]], "EPUB")
+        assert_contains(joined_text, [title, "Version", version, status, "General Editor", general_editor, *markers[:2]], "EPUB")
         if "WordPress Security Hardening Guide" in joined_text:
             raise ValidationError(f"EPUB contains stale running head from old template: {path}")
     print("OK   [EPUB] structure and canonical text markers found")
@@ -126,8 +126,8 @@ def validate_doc(doc: dict, root: Path) -> None:
     texts = {
         "Markdown": validate_markdown(source, title, markers, version, status, general_editor),
         "PDF": validate_pdf(root / f"{base}.pdf", title, markers, doc.get("intro_marker", title), version, status, general_editor),
-        "EPUB": validate_epub(root / f"{base}.epub", title, markers),
-        "DOCX": validate_docx(root / f"{base}.docx", title, markers),
+        "EPUB": validate_epub(root / f"{base}.epub", title, markers, version, status, general_editor),
+        "DOCX": validate_docx(root / f"{base}.docx", title, markers, version, status, general_editor),
     }
     for label, text in texts.items():
         assert_contains(text, markers, label)
