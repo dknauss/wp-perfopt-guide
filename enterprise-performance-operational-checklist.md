@@ -9,7 +9,7 @@
 
 A checklist-oriented enterprise operational guide for diagnosing, optimizing, and verifying performance on high-traffic WordPress sites where backend execution, cacheability, database access, object caching, traffic events, and measurement discipline matter. It complements the general [`wordpress-performance-optimization-checklist.md`](wordpress-performance-optimization-checklist.md) by going deeper on operational scale and platform constraints.
 
-> Do not start by installing another performance plugin. Start by identifying where time is spent, whether WordPress is executing at all, and whether the response can safely be cached.
+> Enterprise performance work starts with evidence, ownership, and reversibility: identify where time is spent, whether WordPress is executing at all, whether the response can safely be cached, who can approve a production change, and how the change will be rolled back.
 
 ---
 

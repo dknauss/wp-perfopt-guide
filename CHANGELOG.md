@@ -5,6 +5,7 @@ All notable changes to this repository are documented here.
 ## Unreleased
 
 ### Changed
+- Moved the general “do not start by installing another performance plugin” guidance out of the enterprise checklist, replaced it with enterprise-focused evidence/approval/rollback framing, and fixed generated document task-list rendering by enabling Pandoc task-list parsing.
 - Promoted the full Performance series from `DRAFT` to `Released` status and raised the incident runbook to version 1.0 (parity with its 1.1/1.2 siblings) in both the document headers and `.github/documents.json`. Generated PDF/DOCX/EPUB artifacts must be regenerated to embed the new status/version.
 - Updated the editorial-board methodology to the current five-document series and added an Incident Runbook Reviewer role (shareable with the Enterprise Checklist Reviewer).
 - Normalized the archived 2026-05-18 review round to repo-relative/`~`-relative paths and added a historical banner noting the enterprise-checklist rename and four-to-five document expansion.

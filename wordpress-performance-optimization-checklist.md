@@ -13,6 +13,8 @@ This general guide is especially focused on the transport layer and a debugging/
 
 > Principle: performance is not a score. Optimize for the user experience: fast response, quick interactivity, stable layout, and predictable behavior across real devices and networks.
 
+> Do not start by installing another performance plugin. Start by identifying where time is spent, whether WordPress is executing at all, and whether the response can safely be cached.
+
 
 ## Companion cross-reference: Enterprise operational checklist
 
