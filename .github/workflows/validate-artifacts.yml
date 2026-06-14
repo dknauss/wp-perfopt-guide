@@ -3,10 +3,21 @@ name: Validate Artifacts
 on:
   push:
     branches: [main]
-    paths:
+    paths: &artifact_validation_paths
+      - 'DEVELOPER_REFERENCE.md'
+      - 'wordpress-performance-optimization-checklist.md'
+      - 'enterprise-performance-operational-checklist.md'
+      - 'REFERENCE-WP-Transients-Persistent-Object-Cache.md'
+      - 'wordpress-performance-incident-runbook.md'
       - '*.pdf'
       - '*.docx'
       - '*.epub'
+      - '.github/documents.json'
+      - '.github/scripts/validate-artifacts.py'
+      - '.github/workflows/validate-artifacts.yml'
+      - '.github/pandoc/**'
+  pull_request:
+    paths: *artifact_validation_paths
   workflow_dispatch:
 
 permissions:

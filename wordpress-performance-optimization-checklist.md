@@ -297,7 +297,7 @@ Optimize what WordPress loads and executes for each request.
 - [ ] Move heavy work to background jobs where appropriate.
 - [ ] Cache expensive computed results.
 - [ ] Avoid remote HTTP calls during page generation unless cached and timeout-protected.
-- [ ] Inventory WordPress 7.0 AI Client, Abilities API, or Connectors API integrations; measure external API latency, timeouts, retries, queueing, and cache behavior before treating those workflows as production-safe.
+- [ ] Inventory WordPress 6.9 server-side Abilities API integrations and WordPress 7.0 WP AI Client, client-side Abilities package, MCP adapter/connectors, or Connectors API integrations; measure external API latency, timeouts, retries, queueing, and cache behavior before treating those workflows as production-safe.
 
 WP-CLI profiling examples:
 

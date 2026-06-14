@@ -3,17 +3,22 @@ name: Generate PDF, Word & EPUB Documents
 on:
   push:
     branches: [main]
-    paths:
+    paths: &document_paths
       - 'DEVELOPER_REFERENCE.md'
       - 'wordpress-performance-optimization-checklist.md'
       - 'enterprise-performance-operational-checklist.md'
       - 'REFERENCE-WP-Transients-Persistent-Object-Cache.md'
       - 'wordpress-performance-incident-runbook.md'
+      - '*.pdf'
+      - '*.docx'
+      - '*.epub'
       - '.github/documents.json'
       - '.github/scripts/generate-docs.sh'
       - '.github/scripts/validate-artifacts.py'
       - '.github/workflows/generate-docs.yml'
       - '.github/pandoc/**'
+  pull_request:
+    paths: *document_paths
   workflow_dispatch:
 
 permissions:
@@ -82,7 +87,7 @@ jobs:
             .github/pandoc/epub.css
 
       - name: Commit generated documents
-        if: github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           branch="${GITHUB_REF_NAME:-main}"
 
