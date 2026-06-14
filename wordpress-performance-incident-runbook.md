@@ -23,8 +23,25 @@ Customize these before running commands:
 export WP_PATH="[CUSTOMIZE: /path/to/wordpress]"
 export SITE_URL="[CUSTOMIZE: https://example.com]"
 export TARGET_URL="[CUSTOMIZE: https://example.com/problem-url/]"
+export GOOD_URL="[CUSTOMIZE: https://example.com/known-good-url/]"
 export INCIDENT_ID="[CUSTOMIZE: YYYYMMDD-short-name]"
-export OPTIONS_TABLE="[CUSTOMIZE: wp_options or wp_2_options]"
+export EVIDENCE_DIR="./incident-${INCIDENT_ID}"
+mkdir -p "$EVIDENCE_DIR"
+
+# Site-specific WP-CLI arguments. Keep --url for multisite and harmless single-site parity.
+WP_CLI_SITE_ARGS=(--path="$WP_PATH" --url="$SITE_URL")
+
+# Derive the affected site's options table instead of hand-typing wp_options/wp_2_options.
+OPTIONS_TABLE="$(wp "${WP_CLI_SITE_ARGS[@]}" db prefix)options"
+wp "${WP_CLI_SITE_ARGS[@]}" db query "SHOW TABLES LIKE '${OPTIONS_TABLE}';"
+
+# Authenticated/dynamic request placeholders. Leave empty for anonymous checks.
+COOKIE_JAR="[CUSTOMIZE: /path/to/auth-cookies.txt or empty]"
+AUTH_HEADER="[CUSTOMIZE: Authorization: Bearer token or empty]"
+EXPECTED_STATUS="[CUSTOMIZE: expected HTTP status, e.g. 200]"
+CURL_AUTH_ARGS=()
+# CURL_AUTH_ARGS=(-b "$COOKIE_JAR")
+# CURL_AUTH_ARGS=(-H "$AUTH_HEADER")
 ```
 
 Assumptions:
@@ -32,8 +49,8 @@ Assumptions:
 - WP-CLI is available as `wp`.
 - Commands run with a user that can read the WordPress install and, where needed, query the database.
 - Production write operations require explicit incident lead approval.
-- Multisite incidents must add `--url="$SITE_URL"` to site-specific WP-CLI commands.
-- `OPTIONS_TABLE` must match the affected site table prefix. For multisite, use the affected blog options table such as `wp_2_options`, not always `wp_options`.
+- Site-specific WP-CLI commands use `WP_CLI_SITE_ARGS`; for multisite this targets the affected blog with `--url="$SITE_URL"`.
+- `OPTIONS_TABLE` is derived from `wp db prefix` for the selected site and verified before raw SQL is used. For network-wide checks, label the command as network-wide before running it.
 
 ## Severity triggers
 
@@ -57,7 +74,7 @@ Assumptions:
 1. Assign roles: incident lead, WordPress engineer, platform/hosting engineer, communications owner.
 2. Confirm user impact and severity.
 3. Freeze unrelated deploys, cache-rule changes, and plugin/theme updates.
-4. Capture response headers and timings for one affected URL and one known-good URL.
+4. Capture response headers and timings for one affected URL and one known-good URL into `EVIDENCE_DIR`.
 5. Determine whether the affected request is served from edge/page cache or reaches origin/PHP.
 6. Pick the matching procedure below and proceed.
 
@@ -80,7 +97,7 @@ Establish the incident scope, preserve evidence, and decide which deeper procedu
 
 - Shell access with `curl`.
 - WP-CLI access for the target WordPress install.
-- Known affected URL and expected user state: anonymous, logged-in, admin, REST, AJAX, cron, or checkout/account.
+- Known affected URL, known-good URL, and expected user state: anonymous, logged-in, admin, REST, AJAX, cron, or checkout/account.
 
 ### Commands
 
@@ -88,20 +105,25 @@ Establish the incident scope, preserve evidence, and decide which deeper procedu
 date -u
 printf 'Incident: %s\nSite: %s\nTarget: %s\n' "$INCIDENT_ID" "$SITE_URL" "$TARGET_URL"
 
-curl -sS -o /dev/null -D "headers-${INCIDENT_ID}.txt" \
-  -w 'dns:%{time_namelookup} connect:%{time_connect} tls:%{time_appconnect} ttfb:%{time_starttransfer} total:%{time_total} code:%{http_code}\n' \
+curl -sS -o /dev/null -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-target.txt" \
+  -w 'target dns:%{time_namelookup} connect:%{time_connect} tls:%{time_appconnect} ttfb:%{time_starttransfer} total:%{time_total} code:%{http_code}\n' \
   "$TARGET_URL"
 
-sed -n '1,80p' "headers-${INCIDENT_ID}.txt"
+curl -sS -o /dev/null -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-known-good.txt" \
+  -w 'known_good dns:%{time_namelookup} connect:%{time_connect} tls:%{time_appconnect} ttfb:%{time_starttransfer} total:%{time_total} code:%{http_code}\n' \
+  "$GOOD_URL"
 
-wp --path="$WP_PATH" core version
-wp --path="$WP_PATH" option get siteurl
-wp --path="$WP_PATH" option get home
+sed -n '1,80p' "$EVIDENCE_DIR/headers-${INCIDENT_ID}-target.txt"
+sed -n '1,80p' "$EVIDENCE_DIR/headers-${INCIDENT_ID}-known-good.txt"
+
+wp "${WP_CLI_SITE_ARGS[@]}" core version
+wp "${WP_CLI_SITE_ARGS[@]}" option get siteurl
+wp "${WP_CLI_SITE_ARGS[@]}" option get home
 ```
 
 ### Expected Output
 
-- `curl` reports HTTP status, TTFB, and total time.
+- `curl` reports HTTP status, TTFB, and total time for both affected and known-good URLs.
 - Response headers show whether the response was a cache `HIT`, `MISS`, `BYPASS`, `DYNAMIC`, or origin response according to the site/CDN conventions.
 - WP-CLI returns the WordPress version and expected site URLs.
 
@@ -112,8 +134,8 @@ No rollback is required. This procedure is read-only.
 ### Verification
 
 ```bash
-test -s "headers-${INCIDENT_ID}.txt" && echo "headers captured"
-wp --path="$WP_PATH" core is-installed && echo "wp-cli can inspect the install"
+test -s "$EVIDENCE_DIR/headers-${INCIDENT_ID}-target.txt" && test -s "$EVIDENCE_DIR/headers-${INCIDENT_ID}-known-good.txt" && echo "headers captured"
+wp "${WP_CLI_SITE_ARGS[@]}" core is-installed && echo "wp-cli can inspect the install"
 ```
 
 Expected: both checks print success messages.
@@ -149,18 +171,18 @@ Determine whether high anonymous-page TTFB is caused by cache miss/bypass, trans
 
 ```bash
 for i in 1 2 3; do
-  curl -sS -o /dev/null -D "headers-${INCIDENT_ID}-anon-${i}.txt" \
+  curl -sS -o /dev/null -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-anon-${i}.txt" \
     -w "run:${i} dns:%{time_namelookup} connect:%{time_connect} tls:%{time_appconnect} ttfb:%{time_starttransfer} total:%{time_total} code:%{http_code}\n" \
     "$TARGET_URL"
 done
 
-grep -E '^(HTTP/|cache-control:|Cache-Control:|age:|Age:|x-cache|X-Cache|cf-cache-status|CF-Cache-Status|x-redirect-by|X-Redirect-By|set-cookie:|Set-Cookie:)' headers-${INCIDENT_ID}-anon-*.txt || true
+grep -E '^(HTTP/|cache-control:|Cache-Control:|age:|Age:|x-cache|X-Cache|cf-cache-status|CF-Cache-Status|x-redirect-by|X-Redirect-By|set-cookie:|Set-Cookie:)' "$EVIDENCE_DIR"/headers-${INCIDENT_ID}-anon-*.txt || true
 
-wp --path="$WP_PATH" cron event list --due-now
+wp "${WP_CLI_SITE_ARGS[@]}" cron event list --due-now
 
-# Optional write operation - run only after incident lead approval.
+# WRITE — approval required. Optional cleanup; run only after incident lead approval.
 # This can add database load and remove evidence of transient churn.
-# wp --path="$WP_PATH" transient delete --expired
+# wp "${WP_CLI_SITE_ARGS[@]}" transient delete --expired
 ```
 
 ### Expected Output
@@ -176,11 +198,11 @@ No rollback is required for the default read-only checks. If the optional expire
 ### Verification
 
 ```bash
-curl -sS -o /dev/null -D "headers-${INCIDENT_ID}-verify.txt" \
+curl -sS -o /dev/null -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-verify.txt" \
   -w 'ttfb:%{time_starttransfer} total:%{time_total} code:%{http_code}\n' \
   "$TARGET_URL"
 
-grep -E '^(HTTP/|age:|Age:|x-cache|X-Cache|cf-cache-status|CF-Cache-Status|cache-control:|Cache-Control:)' "headers-${INCIDENT_ID}-verify.txt" || true
+grep -E '^(HTTP/|age:|Age:|x-cache|X-Cache|cf-cache-status|CF-Cache-Status|cache-control:|Cache-Control:)' "$EVIDENCE_DIR/headers-${INCIDENT_ID}-verify.txt" || true
 ```
 
 Expected: cacheable anonymous pages show an intentional cache status and improved TTFB after warming.
@@ -210,25 +232,30 @@ Diagnose slow dynamic requests that cannot be solved by public full-page caching
 ### Prerequisites
 
 - A target URL, REST route, AJAX action, or admin screen has been identified.
-- Authentication method is available for deeper tooling if needed.
+- Authentication method is available for deeper tooling if needed, and `CURL_AUTH_ARGS` is set when verifying logged-in/admin/REST/AJAX behavior.
 - WP-CLI profile and doctor packages may not be installed; check availability before relying on them.
 
 ### Commands
 
 ```bash
-wp --path="$WP_PATH" cli has-command profile && echo "profile available" || echo "profile not installed"
-wp --path="$WP_PATH" cli has-command doctor && echo "doctor available" || echo "doctor not installed"
+if wp "${WP_CLI_SITE_ARGS[@]}" cli has-command profile; then
+  echo "profile available"
+  wp "${WP_CLI_SITE_ARGS[@]}" profile stage --url="$TARGET_URL"
+  wp "${WP_CLI_SITE_ARGS[@]}" profile hook --url="$TARGET_URL" --all
+else
+  echo "profile not installed"
+fi
 
-# If profile is available:
-wp --path="$WP_PATH" profile stage --url="$TARGET_URL" || true
-wp --path="$WP_PATH" profile hook --url="$TARGET_URL" --all || true
-
-# If doctor is available:
-wp --path="$WP_PATH" doctor check || true
+if wp "${WP_CLI_SITE_ARGS[@]}" cli has-command doctor; then
+  echo "doctor available"
+  wp "${WP_CLI_SITE_ARGS[@]}" doctor check
+else
+  echo "doctor not installed"
+fi
 
 # Always safe baseline checks:
-wp --path="$WP_PATH" plugin list --status=active
-wp --path="$WP_PATH" theme list --status=active
+wp "${WP_CLI_SITE_ARGS[@]}" plugin list --status=active
+wp "${WP_CLI_SITE_ARGS[@]}" theme list --status=active
 ```
 
 ### Expected Output
@@ -245,12 +272,16 @@ No rollback is required for profiling. If an approved mitigation disables a plug
 ### Verification
 
 ```bash
-curl -sS -o /dev/null -D "headers-${INCIDENT_ID}-dynamic-verify.txt" \
+curl -sS "${CURL_AUTH_ARGS[@]}" -o "$EVIDENCE_DIR/body-${INCIDENT_ID}-dynamic-verify.txt" -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-dynamic-verify.txt" \
   -w 'ttfb:%{time_starttransfer} total:%{time_total} code:%{http_code}\n' \
   "$TARGET_URL"
+
+grep -E "^HTTP/.* ${EXPECTED_STATUS}" "$EVIDENCE_DIR/headers-${INCIDENT_ID}-dynamic-verify.txt" || true
+# Optional body marker check for authenticated/admin/REST/AJAX responses:
+# grep -F "[CUSTOMIZE: expected body marker]" "$EVIDENCE_DIR/body-${INCIDENT_ID}-dynamic-verify.txt"
 ```
 
-Expected: TTFB and total time improve for the same authenticated/dynamic path, or the dominant bottleneck is identified for escalation.
+Expected: TTFB and total time improve for the same URL, user state, authentication method, and expected HTTP status/body marker, or the dominant bottleneck is identified for escalation.
 
 ### Escalate If
 
@@ -283,11 +314,11 @@ Identify whether database time is dominated by slow queries, too many queries, i
 ### Commands
 
 ```bash
-wp --path="$WP_PATH" db query "SELECT option_name, LENGTH(option_value) AS size, autoload FROM ${OPTIONS_TABLE} WHERE autoload IN ('yes', 'on', 'auto', 'auto-on') ORDER BY size DESC LIMIT 20;"
+wp "${WP_CLI_SITE_ARGS[@]}" db query "SELECT option_name, LENGTH(option_value) AS size, autoload FROM ${OPTIONS_TABLE} WHERE autoload IN ('yes', 'on', 'auto', 'auto-on') ORDER BY size DESC LIMIT 20;"
 
-wp --path="$WP_PATH" db query "SELECT SUM(LENGTH(option_value)) AS autoload_bytes FROM ${OPTIONS_TABLE} WHERE autoload IN ('yes', 'on', 'auto', 'auto-on');"
+wp "${WP_CLI_SITE_ARGS[@]}" db query "SELECT SUM(LENGTH(option_value)) AS autoload_bytes FROM ${OPTIONS_TABLE} WHERE autoload IN ('yes', 'on', 'auto', 'auto-on');"
 
-wp --path="$WP_PATH" db size --tables
+wp "${WP_CLI_SITE_ARGS[@]}" db size --tables
 ```
 
 ### Expected Output
@@ -302,18 +333,18 @@ If an approved autoload change is made, record the previous autoload value first
 
 ```bash
 # Read before changing.
-wp --path="$WP_PATH" db query "SELECT option_name, autoload FROM ${OPTIONS_TABLE} WHERE option_name='[CUSTOMIZE: option_name]';"
+wp "${WP_CLI_SITE_ARGS[@]}" db query "SELECT option_name, autoload FROM ${OPTIONS_TABLE} WHERE option_name='[CUSTOMIZE: option_name]';"
 
 # Rollback example - choose the previous value captured above.
-wp --path="$WP_PATH" option set-autoload "[CUSTOMIZE: option_name]" on
+wp "${WP_CLI_SITE_ARGS[@]}" option set-autoload "[CUSTOMIZE: option_name]" on
 ```
 
 ### Verification
 
 ```bash
-wp --path="$WP_PATH" db query "SELECT SUM(LENGTH(option_value)) AS autoload_bytes FROM ${OPTIONS_TABLE} WHERE autoload IN ('yes', 'on', 'auto', 'auto-on');"
+wp "${WP_CLI_SITE_ARGS[@]}" db query "SELECT SUM(LENGTH(option_value)) AS autoload_bytes FROM ${OPTIONS_TABLE} WHERE autoload IN ('yes', 'on', 'auto', 'auto-on');"
 
-curl -sS -o /dev/null -D "headers-${INCIDENT_ID}-db-verify.txt" \
+curl -sS -o /dev/null -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-db-verify.txt" \
   -w 'ttfb:%{time_starttransfer} total:%{time_total} code:%{http_code}\n' \
   "$TARGET_URL"
 ```
@@ -353,12 +384,12 @@ Determine whether a persistent object cache failure, poor hit rate, key misuse, 
 ```bash
 test -f "$WP_PATH/wp-content/object-cache.php" && echo "object-cache.php drop-in present" || echo "no persistent object-cache drop-in found"
 
-wp --path="$WP_PATH" cache type || true
-wp --path="$WP_PATH" cache get non_existing_key incident_probe || true
+wp "${WP_CLI_SITE_ARGS[@]}" cache type || true
+wp "${WP_CLI_SITE_ARGS[@]}" cache get non_existing_key incident_probe || true
 
-# Optional write operation - run only after incident lead approval.
+# WRITE — approval required. Optional cleanup; run only after incident lead approval.
 # This can add database load and remove evidence of transient churn.
-# wp --path="$WP_PATH" transient delete --expired
+# wp "${WP_CLI_SITE_ARGS[@]}" transient delete --expired
 ```
 
 ### Expected Output
@@ -372,16 +403,16 @@ wp --path="$WP_PATH" cache get non_existing_key incident_probe || true
 Do not flush object cache as rollback. If optional expired-transient cleanup is approved and run, there is no practical rollback for deleted expired transient rows; rely on application regeneration and continue monitoring. If an approved cache-service restart or configuration change worsens the incident, restore the previous service/configuration state through the hosting/platform control plane.
 
 ```bash
-# Plugin-dependent - uncomment the cache plugin(s) in use only after approval:
-# wp --path="$WP_PATH" redis status
-# wp --path="$WP_PATH" redis enable
-# wp --path="$WP_PATH" redis disable
+# PLUGIN-DEPENDENT / ROLLBACK — approval required. Uncomment only for the cache plugin in use:
+# wp "${WP_CLI_SITE_ARGS[@]}" redis status
+# wp "${WP_CLI_SITE_ARGS[@]}" redis enable
+# wp "${WP_CLI_SITE_ARGS[@]}" redis disable
 ```
 
 ### Verification
 
 ```bash
-curl -sS -o /dev/null -D "headers-${INCIDENT_ID}-cache-verify.txt" \
+curl -sS -o /dev/null -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-cache-verify.txt" \
   -w 'ttfb:%{time_starttransfer} total:%{time_total} code:%{http_code}\n' \
   "$TARGET_URL"
 ```
@@ -419,12 +450,12 @@ Identify whether due cron events, failed scheduled actions, or overlapping backg
 ### Commands
 
 ```bash
-wp --path="$WP_PATH" cron event list --due-now
-wp --path="$WP_PATH" cron event list --fields=hook,next_run_relative,recurrence
+wp "${WP_CLI_SITE_ARGS[@]}" cron event list --due-now
+wp "${WP_CLI_SITE_ARGS[@]}" cron event list --fields=hook,next_run_relative,recurrence
 
-# Plugin-dependent - uncomment if Action Scheduler WP-CLI commands are available:
-# wp --path="$WP_PATH" action-scheduler list --status=pending --per-page=20
-# wp --path="$WP_PATH" action-scheduler list --status=failed --per-page=20
+# PLUGIN-DEPENDENT / READ-ONLY - uncomment if Action Scheduler WP-CLI commands are available:
+# wp "${WP_CLI_SITE_ARGS[@]}" action-scheduler list --status=pending --per-page=20
+# wp "${WP_CLI_SITE_ARGS[@]}" action-scheduler list --status=failed --per-page=20
 ```
 
 ### Expected Output
@@ -445,14 +476,17 @@ If `DISABLE_WP_CRON` was added and the external runner is not working, remove or
 ### Verification
 
 ```bash
-wp --path="$WP_PATH" cron event list --due-now
+wp "${WP_CLI_SITE_ARGS[@]}" cron event list --due-now
 
-# If using a system runner, verify it can run due events:
-wp --path="$WP_PATH" cron event run --due-now --quiet
-wp --path="$WP_PATH" cron event list --due-now
+# WRITE — approval required. Running due events can send email, process queues,
+# call external services, and add PHP/database load. Prefer a specific known-safe
+# hook over all due events when possible.
+# wp "${WP_CLI_SITE_ARGS[@]}" cron event run "[CUSTOMIZE: hook_name]" --due-now
+# wp "${WP_CLI_SITE_ARGS[@]}" cron event run --due-now --quiet
+# wp "${WP_CLI_SITE_ARGS[@]}" cron event list --due-now
 ```
 
-Expected: due events decrease or clear; business workflows such as scheduled posts, cleanup jobs, and ecommerce queues resume.
+Expected: read-only verification shows whether due events are decreasing under the normal runner. If approved cron execution is run, due events decrease or clear and business workflows such as scheduled posts, cleanup jobs, and ecommerce queues resume.
 
 ### Escalate If
 
@@ -485,9 +519,9 @@ Identify whether external HTTP calls, WordPress 7.0 AI/connectors integrations, 
 ### Commands
 
 ```bash
-wp --path="$WP_PATH" plugin list --status=active --fields=name,status,version,update
+wp "${WP_CLI_SITE_ARGS[@]}" plugin list --status=active --fields=name,status,version,update
 
-curl -sS -o /dev/null -D "headers-${INCIDENT_ID}-external.txt" \
+curl -sS -o /dev/null -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-external.txt" \
   -w 'ttfb:%{time_starttransfer} total:%{time_total} code:%{http_code}\n' \
   "$TARGET_URL"
 ```
@@ -503,15 +537,15 @@ curl -sS -o /dev/null -D "headers-${INCIDENT_ID}-external.txt" \
 If an approved feature flag, connector setting, or plugin configuration change is made, restore the prior setting from the incident log or configuration management system.
 
 ```bash
-# Plugin-dependent - uncomment only for the specific plugin/feature flag in use:
-# wp --path="$WP_PATH" option get "[CUSTOMIZE: option_name]"
-# wp --path="$WP_PATH" option update "[CUSTOMIZE: option_name]" "[CUSTOMIZE: previous_value]"
+# PLUGIN-DEPENDENT / ROLLBACK — approval required. Uncomment only for the specific plugin/feature flag in use:
+# wp "${WP_CLI_SITE_ARGS[@]}" option get "[CUSTOMIZE: option_name]"
+# wp "${WP_CLI_SITE_ARGS[@]}" option update "[CUSTOMIZE: option_name]" "[CUSTOMIZE: previous_value]"
 ```
 
 ### Verification
 
 ```bash
-curl -sS -o /dev/null -D "headers-${INCIDENT_ID}-external-verify.txt" \
+curl -sS -o /dev/null -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-external-verify.txt" \
   -w 'ttfb:%{time_starttransfer} total:%{time_total} code:%{http_code}\n' \
   "$TARGET_URL"
 ```
@@ -549,11 +583,11 @@ Triage a user-facing LCP, INP, or CLS regression without confusing frontend symp
 ### Commands
 
 ```bash
-curl -sS -o /dev/null -D "headers-${INCIDENT_ID}-cwv.txt" \
+curl -sS -o /dev/null -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-cwv.txt" \
   -w 'dns:%{time_namelookup} connect:%{time_connect} tls:%{time_appconnect} ttfb:%{time_starttransfer} total:%{time_total} code:%{http_code}\n' \
   "$TARGET_URL"
 
-grep -E '^(HTTP/|cache-control:|Cache-Control:|age:|Age:|x-cache|X-Cache|cf-cache-status|CF-Cache-Status|content-type:|Content-Type:)' "headers-${INCIDENT_ID}-cwv.txt" || true
+grep -E '^(HTTP/|cache-control:|Cache-Control:|age:|Age:|x-cache|X-Cache|cf-cache-status|CF-Cache-Status|content-type:|Content-Type:)' "$EVIDENCE_DIR/headers-${INCIDENT_ID}-cwv.txt" || true
 ```
 
 ### Expected Output
@@ -569,7 +603,7 @@ If the regression follows a deploy, rollback through the normal release system a
 ### Verification
 
 ```bash
-curl -sS -o /dev/null -D "headers-${INCIDENT_ID}-cwv-verify.txt" \
+curl -sS -o /dev/null -D "$EVIDENCE_DIR/headers-${INCIDENT_ID}-cwv-verify.txt" \
   -w 'ttfb:%{time_starttransfer} total:%{time_total} code:%{http_code}\n' \
   "$TARGET_URL"
 ```

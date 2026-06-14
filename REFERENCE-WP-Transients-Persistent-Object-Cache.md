@@ -21,7 +21,7 @@ WordPress transients are a temporary caching API. They are often described as �
 
 ### Acknowledgements
 
-This document draws on and has been checked against canonical resources and industry leaders, including the official **WordPress.org Advanced Administration Handbook**, Automattic/WordPress VIP Learn’s **Enterprise WordPress Performance** course, and Remkus de Vries’ **Make WordPress Fast** course for the Within WordPress Guild. Community discussions around WordPress.org developer documentation on transients, object caching, cache bootstrap behavior, the Options API, and modern Core performance features have informed this document as well.
+This document has been checked against WordPress core behavior and official WordPress.org developer/administration documentation, including the **WordPress.org Advanced Administration Handbook**. It is also informed by and compared with Automattic/WordPress VIP Learn’s **Enterprise WordPress Performance** course and Remkus de Vries’ **Make WordPress Fast** course for the Within WordPress Guild. Community discussions around WordPress.org developer documentation on transients, object caching, cache bootstrap behavior, the Options API, and modern Core performance features have informed this document as well.
 
 ---
 

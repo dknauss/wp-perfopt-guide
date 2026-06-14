@@ -5,6 +5,10 @@ All notable changes to this repository are documented here.
 ## Unreleased
 
 ### Changed
+- Hardened the incident runbook for multisite and production incident use: site-specific WP-CLI arguments, derived options-table detection, evidence directories, known-good URL capture, authenticated/dynamic verification placeholders, and approval-gated cron execution examples.
+- Tightened WordPress 6.9/7.0 chronology for the Abilities API, WP AI Client, Connectors, WordPress 6.9 release date, and WordPress 6.4/6.6 autoload API/vocabulary changes.
+- Added pull-request artifact validation coverage and release-time artifact validation before generated documents are published.
+- Neutralized source-correction and acknowledgement wording so source courses remain credited without being over-identified as document titles or primary authority.
 - Added the incident runbook to `.github/documents.json` so PDF, DOCX, and EPUB publication artifacts are generated and validated with the rest of the Performance series.
 - Added `wordpress-performance-incident-runbook.md`, a unified operational runbook for active WordPress performance incidents with read-first procedures, rollback steps, verification, and escalation criteria.
 - Integrated WordPress 6.4–7.0 performance guidance throughout the general and enterprise checklists, replacing separate “modern additions” appendix framing with section-level guidance for autoloaded options, speculative loading, Performance Lab, PHP/runtime baselines, WP-Cron, frontend loading, and AI/connectors operational review.

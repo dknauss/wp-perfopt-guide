@@ -1,6 +1,6 @@
-# Source corrections: where this guide improves on Remkus and WP VIP
+# Source corrections and attribution notes
 
-This document explains, in plain terms, six issues that originate in the Remkus de Vries **Make WordPress Fast** course materials and/or the WP VIP Learn **Enterprise WordPress Performance** course materials, and how the guides in this repository correct them.
+This document explains, in plain terms, six source-audit notes from the Remkus de Vries **Make WordPress Fast** course materials and/or the WP VIP Learn **Enterprise WordPress Performance** course materials, and how the guides in this repository handle those points.
 
 These aren't catastrophic errors in the source courses — both are excellent and substantially more accurate than most WordPress performance content. But six things are worth flagging because they can quietly mislead a careful reader, and because anyone using this guide alongside the original courses should know where the two diverge.
 

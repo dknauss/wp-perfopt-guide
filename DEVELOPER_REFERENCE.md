@@ -9,7 +9,7 @@
 
 > **Environments:** Ordinary hosting, standard managed WordPress hosting platforms, and enterprise environments.
 
-> **Acknowledgements:** This document draws on and has been checked against canonical resources and industry leaders, including the official **WordPress.org Advanced Administration Handbook**, Automattic/WordPress VIP Learn’s **Enterprise WordPress Performance** course, and Remkus de Vries’ **Make WordPress Fast** course for the Within WordPress Guild. Community discussions around WordPress.org developer documentation on transients, object caching, cache bootstrap behavior, the Options API, and modern Core performance features have informed this document as well.
+> **Acknowledgements:** This document has been checked against WordPress core behavior and official WordPress.org developer/administration documentation, including the **WordPress.org Advanced Administration Handbook**. It is also informed by and compared with Automattic/WordPress VIP Learn’s **Enterprise WordPress Performance** course and Remkus de Vries’ **Make WordPress Fast** course for the Within WordPress Guild. Community discussions around WordPress.org developer documentation on transients, object caching, cache bootstrap behavior, the Options API, and modern Core performance features have informed this document as well.
 
 > **Currency:** Last verified against WordPress 7.0 on 2026-06-14.
 
@@ -1272,7 +1272,7 @@ Featured plugins as of 2026-06-14 include:
 - **Instant Back/Forward** — improves browser back/forward-cache behavior where applicable.
 - **Modern Image Formats** — formerly named for WebP uploads; stores additional WebP/AVIF versions of uploaded images and serves modern formats to supporting browsers.
 - **Optimization Detective** — opt-in real-user measurement that informs Core/Performance Lab decisions; dependency for some other featured plugins.
-- **Performant Translations**, **Speculative Loading**, and **View Transitions** — additional featured plugins whose relevance depends on the site and rollout risk.
+- **Performant Translations**, **Speculative Loading**, and **View Transitions — experimental** — additional featured plugins whose relevance depends on the site and rollout risk.
 
 Recommendation: evaluate Performance Lab on staging, look at the current Featured Plugins list at the verification time, and adopt specific plugins by name only when they match the site's documented performance need. The catalog changes over time; for example, Performance Lab 4.1.0 removed Web Worker Offloading from the featured list.
 
@@ -1284,13 +1284,13 @@ The standalone [Speculative Loading plugin](https://wordpress.org/plugins/specul
 
 Enterprise considerations: edge cache hit ratio can rise on sites with predictable navigation patterns because prefetches may hit cache before the eventual navigation. Confirm session-keyed and personalized pages are excluded from speculative loading with Core filters, `no-prefetch` / `no-prerender` classes, or plugin-provided exclusion controls. Do not use older `data-prefetch="false"` wording as the recommended Core opt-out mechanism.
 
-### WP 6.6+ Options API improvements
+### WP 6.4+ and 6.6+ Options API improvements
 
-Already covered in §12: WP 6.6 added `wp_set_option_autoload()`, expanded the autoload vocabulary, and added the Site Health autoload check. WP 6.8 continued to tune the auto-skip heuristics.
+Already covered in §12: WordPress 6.4 introduced autoload helper APIs such as `wp_set_option_autoload()`, `wp_set_options_autoload()`, and `wp_set_option_autoload_values()`. WordPress 6.6 then expanded the stored autoload vocabulary (`on`, `off`, `auto`, `auto-on`, `auto-off`), added `wp_autoload_values_to_autoload()`, introduced large-option autoload heuristics, and added the Site Health autoload warning.
 
 ### WordPress 6.9 performance deltas
 
-WordPress 6.9 shipped in November 2025; WordPress 6.9.4 was the current patch release verified on 2026-05-18. The most material 6.9 performance changes for this guide are:
+WordPress 6.9 shipped on December 2, 2025. The most material 6.9 performance changes for this guide are:
 
 - **Frontend loading:** the [WordPress 6.9 Frontend Performance Field Guide](https://make.wordpress.org/core/2025/11/18/wordpress-6-9-frontend-performance-field-guide/) covers script `fetchpriority`, footer script-module printing, emoji script-module changes, block stylesheet handling, hidden-block asset omission, template enhancement output buffering, RSS feed caching, video block CLS fixes, and related frontend work.
 - **WP-Cron spawn timing:** Core now spawns WP-Cron at shutdown rather than earlier in the request lifecycle, reducing user-facing latency for request-triggered cron. Sites with a verified external cron runner remain the preferred high-traffic pattern.
@@ -1303,7 +1303,7 @@ Treat this as a delta inventory, not a substitute for measurement: verify impact
 WordPress 7.0 was released on May 20, 2026 and was the current active branch verified on 2026-06-14. The most relevant 7.0 changes for this performance guide are compatibility and operational-risk changes rather than a single universal speed feature:
 
 - **PHP support baseline:** WordPress 7.0 drops support for PHP 7.2 and 7.3. The new minimum supported PHP version is 7.4.0, while PHP 8.3 remains the minimum recommended version. For performance work, treat PHP 7.4 as a compatibility floor, not an optimization target; benchmark on the production-intended PHP 8.x runtime when possible.
-- **AI Client, Abilities, and Connectors:** WordPress 7.0 adds AI/client-side abilities and a Connectors screen. These features are infrastructure and extensibility surfaces, not automatic frontend performance improvements. If a site enables AI-backed workflows or connector plugins, include external API latency, timeout behavior, credential scoping, caching, and background processing in the performance review.
+- **AI Client, Client-side Abilities, and Connectors:** WordPress 6.9 introduced the server-side Abilities API as an AI-building-block foundation. WordPress 7.0 adds the WP AI Client, client-side Abilities package, and a Connectors screen/API. These features are infrastructure and extensibility surfaces, not automatic frontend performance improvements. If a site enables AI-backed workflows, MCP adapter/connectors, or connector plugins, include external API latency, timeout behavior, credential scoping, caching, and background processing in the performance review.
 - **Modernized admin/editor surfaces:** Admin view transitions, Command Palette access, Font Library changes, Visual Revisions, and the iframed editor can improve operator experience but may change the JavaScript, CSS, and editor-plugin compatibility profile of admin screens. Re-test slow editorial workflows after upgrading.
 - **Real-time collaboration did not ship in Core 7.0:** Do not attribute editor load, memory, or server-concurrency behavior to Core real-time collaboration in WordPress 7.0. The feature was removed before release because of concerns including race conditions, server load, memory efficiency, and recurring bugs.
 
