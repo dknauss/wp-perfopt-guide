@@ -9,7 +9,7 @@
       "Cache layers and responsibilities",
       "WP-CLI"
     ],
-    "version": "1.0",
+    "version": "1.2",
     "status": "DRAFT",
     "general_editor": "Dan Knauss",
     "intro_marker": "Audience:"
@@ -24,13 +24,13 @@
       "Object caching and transients",
       "Definition of done"
     ],
-    "version": "1.0",
+    "version": "1.1",
     "status": "DRAFT",
     "general_editor": "Dan Knauss",
     "intro_marker": "A practical, operations-oriented guide"
   },
   {
-    "source": "wpvip-enterprise-performance-operational-checklist.md",
+    "source": "enterprise-performance-operational-checklist.md",
     "base": "Enterprise-WordPress-Performance-Operational-Checklist",
     "title": "Enterprise WordPress Performance Operational Checklist",
     "markers": [
@@ -39,10 +39,10 @@
       "Object caching",
       "Performance alerting"
     ],
-    "version": "1.0",
+    "version": "1.1",
     "status": "DRAFT",
     "general_editor": "Dan Knauss",
-    "intro_marker": "A checklist-oriented runbook"
+    "intro_marker": "A checklist-oriented enterprise operational guide"
   },
   {
     "source": "REFERENCE-WP-Transients-Persistent-Object-Cache.md",
@@ -54,9 +54,24 @@
       "Race conditions and cache stampedes",
       "Operational checklist"
     ],
-    "version": "1.0",
+    "version": "1.1",
     "status": "DRAFT",
     "general_editor": "Dan Knauss",
     "intro_marker": "A practical reference for understanding"
+  },
+  {
+    "source": "wordpress-performance-incident-runbook.md",
+    "base": "WordPress-Performance-Incident-Runbook",
+    "title": "WordPress Performance Incident Runbook",
+    "markers": [
+      "Initial performance incident triage",
+      "High TTFB on anonymous public pages",
+      "Object cache failure or cache stampede",
+      "Recovery verification checklist"
+    ],
+    "version": "0.1",
+    "status": "DRAFT",
+    "general_editor": "Dan Knauss",
+    "intro_marker": "Use this runbook when"
   }
 ]

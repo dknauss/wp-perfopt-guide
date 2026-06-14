@@ -6,8 +6,9 @@ on:
     paths:
       - 'DEVELOPER_REFERENCE.md'
       - 'wordpress-performance-optimization-checklist.md'
-      - 'wpvip-enterprise-performance-operational-checklist.md'
+      - 'enterprise-performance-operational-checklist.md'
       - 'REFERENCE-WP-Transients-Persistent-Object-Cache.md'
+      - 'wordpress-performance-incident-runbook.md'
       - '.github/documents.json'
       - '.github/scripts/generate-docs.sh'
       - '.github/scripts/validate-artifacts.py'

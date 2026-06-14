@@ -1,9 +1,11 @@
 # WordPress Transients and Persistent Object Cache Reference
 
 
-> **Status:** DRAFT  
-> **Version:** 1.0  
+> **Status:** DRAFT
+> **Version:** 1.1
+> **Date:** 14 June 2026
 > **General Editor:** Dan Knauss
+> **Currency:** API behavior and operational guidance last reviewed for WordPress 7.0 on 2026-06-14.
 
 A practical reference for understanding how the WordPress Transients API behaves with and without a persistent object cache, and how that affects performance, database growth, and enterprise-scale WordPress operations.
 
@@ -17,9 +19,9 @@ WordPress transients are a temporary caching API. They are often described as �
 - Heavy transient usage on a site without persistent object caching can increase database reads/writes and contribute to options table growth.
 - Transients are appropriate for expensive data that is safe to regenerate, but they are not a replacement for durable storage.
 
-### For further reference
+### Acknowledgements
 
-This document synthesizes Remkus de Vries’ **Make WordPress Fast** lessons for the Within WordPress Guild, WP VIP Learn’s **Enterprise WordPress Performance** course, WordPress.org developer documentation, and my (pending) cache clarification work in [WordPress/Advanced-administration-handbook#485](https://github.com/WordPress/Advanced-administration-handbook/pull/485). Use those sources for deeper context on the specific layers discussed here.
+This document draws on and has been checked against canonical resources and industry leaders, including the official **WordPress.org Advanced Administration Handbook**, Automattic/WordPress VIP Learn’s **Enterprise WordPress Performance** course, and Remkus de Vries’ **Make WordPress Fast** course for the Within WordPress Guild. Community discussions around WordPress.org developer documentation on transients, object caching, cache bootstrap behavior, the Options API, and modern Core performance features have informed this document as well.
 
 ---
 
@@ -399,7 +401,7 @@ For enterprise/high-traffic sites:
 
 ---
 
-## 13. Combined guidance from Remkus, WP VIP, WordPress.org, and the handbook PR
+## 13. Source notes: Remkus, WP VIP, WordPress.org, and the handbook PR
 
 ### Remkus / Make WordPress Fast
 
