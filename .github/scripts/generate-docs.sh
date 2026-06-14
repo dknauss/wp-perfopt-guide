@@ -59,7 +59,7 @@ PY
   python3 .github/scripts/build-doc-input.py "$source" "$work_file"
 
   pandoc "$work_file" \
-    --from markdown-task_lists \
+    --from markdown+task_lists \
     --metadata "title=${title}" \
     --metadata "subtitle=${subtitle}" \
     --metadata "author=${author}" \

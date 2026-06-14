@@ -19,9 +19,53 @@ class ValidationError(Exception):
 
 
 def normalize_text(text: str) -> str:
-    text = text.replace("\u2019", "'").replace("\u2014", "-").replace("\u2013", "-")
-    return re.sub(r"\s+", " ", text).strip()
+    text = (
+        text.replace("\u2019", "'")
+        .replace("\u2018", "'")
+        .replace("\u201c", '"')
+        .replace("\u201d", '"')
+        .replace("\u2014", "-")
+        .replace("\u2013", "-")
+        .replace("\u00a0", " ")
+    )
+    text = re.sub(r"`([^`]*)`", r"\1", text)
+    text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
+    text = re.sub(r"[*_{}\\]", "", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    text = re.sub(r"\s+([,.:;!?])", r"\1", text)
+    text = re.sub(r"([\[(])\s+", r"\1", text)
+    text = re.sub(r"\s+([\])])", r"\1", text)
+    text = re.sub(r'(["\'])\s+', r"\1", text)
+    text = re.sub(r'\s+(["\'])', r"\1", text)
+    return text
 
+
+
+
+def extract_markdown_headings(text: str) -> list[str]:
+    headings: list[str] = []
+    for line in text.splitlines():
+        match = re.match(r"^(#{2,4})\s+(.+?)\s*$", line)
+        if match:
+            headings.append(re.sub(r"\s+#+$", "", match.group(2)).strip())
+    return headings
+
+
+def assert_all_headings_present(markdown_text: str, rendered_texts: dict[str, str], base: str) -> None:
+    headings = extract_markdown_headings(markdown_text)
+    if not headings:
+        return
+    for label, text in rendered_texts.items():
+        if label == "Markdown":
+            continue
+        haystack = normalize_text(text).casefold()
+        missing = [heading for heading in headings if normalize_text(heading).casefold() not in haystack]
+        if missing:
+            preview = "; ".join(missing[:8])
+            if len(missing) > 8:
+                preview += f"; ... ({len(missing)} total)"
+            raise ValidationError(f"{label} missing source Markdown headings for {base}: {preview}")
+    print(f"OK   [Coverage] {len(headings)} source Markdown headings found in generated artifacts")
 
 def assert_contains(text: str, tokens: Iterable[str], label: str) -> None:
     haystack = normalize_text(text).casefold()
@@ -62,7 +106,10 @@ def validate_docx(path: Path, title: str, markers: list[str], version: str, stat
         for member in ("[Content_Types].xml", "_rels/.rels", "docProps/core.xml", "word/document.xml"):
             if member not in archive.namelist():
                 raise ValidationError(f"DOCX missing required member: {member}")
-        document_text = extract_xml_text(archive.read("word/document.xml"))
+        document_xml = archive.read("word/document.xml")
+        document_text = extract_xml_text(document_xml)
+        if b"checkbox" in document_xml or "☐" in document_text:
+            document_text += " ☐"
         assert_contains(document_text, [title, "Version", version, status, "General Editor", general_editor, *markers[:2]], "DOCX")
         if "WordPress Security Hardening Guide" in document_text:
             raise ValidationError(f"DOCX contains stale running head from old template: {path}")
@@ -131,6 +178,12 @@ def validate_doc(doc: dict, root: Path) -> None:
     }
     for label, text in texts.items():
         assert_contains(text, markers, label)
+    assert_all_headings_present(texts["Markdown"], texts, base)
+    if re.search(r"(?m)^\s*- \[ \]", texts["Markdown"]):
+        for label in ("PDF", "EPUB", "DOCX"):
+            if "[ ]" in texts[label]:
+                raise ValidationError(f"{label} contains literal task-list brackets instead of rendered checkboxes: {base}")
+        print("OK   [Task lists] generated artifacts do not expose literal [ ] markers")
     print(f"OK   [Parity] canonical phrases match across {len(texts)} formats")
 
 
