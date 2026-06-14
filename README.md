@@ -2,13 +2,13 @@
 [![AI Authorship](https://img.shields.io/badge/AI%20authorship-disclosed-8a63d2.svg)](docs/ai-authorship.md)
 
 
-General and enterprise WordPress performance optimization guidance for developers, technical leads, and operators.
+General and enterprise WordPress performance optimization guidance for developers, technical leads, and operators. Together, the four canonical source documents in this repository form the **Performance series**.
 
 ## Contents
 
 - [`DEVELOPER_REFERENCE.md`](DEVELOPER_REFERENCE.md) — unified developer reference and diagnostic model.
 - [`wordpress-performance-optimization-checklist.md`](wordpress-performance-optimization-checklist.md) — general checklist and triage flow.
-- [`wpvip-enterprise-performance-operational-checklist.md`](wpvip-enterprise-performance-operational-checklist.md) — enterprise/WP VIP-oriented operational checklist.
+- [`enterprise-performance-operational-checklist.md`](enterprise-performance-operational-checklist.md) — enterprise/WP VIP-oriented operational checklist.
 - [`REFERENCE-WP-Transients-Persistent-Object-Cache.md`](REFERENCE-WP-Transients-Persistent-Object-Cache.md) — focused reference on transients and persistent object caching.
 
 ## Working Principles

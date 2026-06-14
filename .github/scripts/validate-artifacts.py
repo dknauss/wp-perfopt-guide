@@ -90,20 +90,20 @@ def validate_epub(path: Path, title: str, markers: list[str]) -> str:
     return joined_text
 
 
-def validate_markdown(path: Path, title: str, markers: list[str]) -> str:
+def validate_markdown(path: Path, title: str, markers: list[str], version: str, status: str, general_editor: str) -> str:
     ensure_exists(path, "Markdown")
     text = path.read_text(encoding="utf-8")
-    assert_contains(text, [title, "Status", "DRAFT", "Version", "1.0", "General Editor", "Dan Knauss", *markers[:2]], "Markdown")
+    assert_contains(text, [title, "Status", status, "Version", version, "General Editor", general_editor, *markers[:2]], "Markdown")
     if "WordPress Security Hardening Guide" in text:
         raise ValidationError(f"Markdown contains stale running head from old template: {path}")
     print("OK   [Markdown] canonical text markers found")
     return text
 
 
-def validate_pdf(path: Path, title: str, markers: list[str], intro_marker: str) -> str:
+def validate_pdf(path: Path, title: str, markers: list[str], intro_marker: str, version: str, status: str, general_editor: str) -> str:
     ensure_exists(path, "PDF")
     text = extract_pdf_text(path)
-    assert_contains(text, [title, "Version 1.0", "DRAFT", "Dan Knauss, General Editor", intro_marker, "Table of Contents", *markers[:2]], "PDF")
+    assert_contains(text, [title, f"Version {version}", status, f"{general_editor}, General Editor", intro_marker, "Table of Contents", *markers[:2]], "PDF")
     intro_index = text.find(intro_marker)
     toc_index = text.find("Table of Contents")
     if toc_index < intro_index:
@@ -119,10 +119,13 @@ def validate_doc(doc: dict, root: Path) -> None:
     base = doc["base"]
     title = doc["title"]
     markers = doc.get("markers", [])
+    version = doc.get("version", "1.0")
+    status = doc.get("status", "DRAFT")
+    general_editor = doc.get("general_editor", "Dan Knauss")
     print(f"\n==> Validating {base}")
     texts = {
-        "Markdown": validate_markdown(source, title, markers),
-        "PDF": validate_pdf(root / f"{base}.pdf", title, markers, doc.get("intro_marker", title)),
+        "Markdown": validate_markdown(source, title, markers, version, status, general_editor),
+        "PDF": validate_pdf(root / f"{base}.pdf", title, markers, doc.get("intro_marker", title), version, status, general_editor),
         "EPUB": validate_epub(root / f"{base}.epub", title, markers),
         "DOCX": validate_docx(root / f"{base}.docx", title, markers),
     }

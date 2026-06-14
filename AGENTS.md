@@ -7,15 +7,15 @@ Agent configuration for AI-assisted editorial and documentation work in this rep
 - **Project type:** Technical documentation — WordPress performance optimization guidance.
 - **Primary audience:** WordPress developers, performance engineers, SREs, technical leads, and enterprise WordPress operators.
 - **Goal:** Maintain practical, source-grounded guidance for diagnosing and improving WordPress performance across hosting, caching, database, runtime, frontend, and operational layers.
-- **Repository role:** Local source repository for performance guidance and companion references.
+- **Repository role:** Canonical local source repository for the Performance series and its companion references.
 
-## 2. Current Document Set
+## 2. Current Performance Series
 
 | Document | Purpose |
 |---|---|
 | `DEVELOPER_REFERENCE.md` | Unified developer reference and mental model for performance work. |
 | `wordpress-performance-optimization-checklist.md` | General WordPress performance checklist and triage flow. |
-| `wpvip-enterprise-performance-operational-checklist.md` | Enterprise/WP VIP-oriented operational checklist. |
+| `enterprise-performance-operational-checklist.md` | Enterprise/WP VIP-oriented operational checklist. |
 | `REFERENCE-WP-Transients-Persistent-Object-Cache.md` | Focused reference on transients, object cache, expiration semantics, and cache behavior. |
 
 ## 3. Editorial Principles

@@ -9,7 +9,7 @@
       "Cache layers and responsibilities",
       "WP-CLI"
     ],
-    "version": "1.0",
+    "version": "1.1",
     "status": "DRAFT",
     "general_editor": "Dan Knauss",
     "intro_marker": "Audience:"
@@ -30,7 +30,7 @@
     "intro_marker": "A practical, operations-oriented guide"
   },
   {
-    "source": "wpvip-enterprise-performance-operational-checklist.md",
+    "source": "enterprise-performance-operational-checklist.md",
     "base": "Enterprise-WordPress-Performance-Operational-Checklist",
     "title": "Enterprise WordPress Performance Operational Checklist",
     "markers": [

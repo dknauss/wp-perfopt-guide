@@ -17,9 +17,9 @@ WordPress transients are a temporary caching API. They are often described as �
 - Heavy transient usage on a site without persistent object caching can increase database reads/writes and contribute to options table growth.
 - Transients are appropriate for expensive data that is safe to regenerate, but they are not a replacement for durable storage.
 
-### For further reference
+### Acknowledgements
 
-This document synthesizes Remkus de Vries’ **Make WordPress Fast** lessons for the Within WordPress Guild, WP VIP Learn’s **Enterprise WordPress Performance** course, WordPress.org developer documentation, and my (pending) cache clarification work in [WordPress/Advanced-administration-handbook#485](https://github.com/WordPress/Advanced-administration-handbook/pull/485). Use those sources for deeper context on the specific layers discussed here.
+This document draws on and has been checked against canonical resources and industry leaders, including the official **WordPress.org Advanced Administration Handbook**, Automattic/WordPress VIP Learn’s **Enterprise WordPress Performance** course, and Remkus de Vries’ **Make WordPress Fast** course for the Within WordPress Guild. Community discussions around WordPress.org developer documentation on transients, object caching, cache bootstrap behavior, the Options API, and modern Core performance features have informed this document as well.
 
 ---
 

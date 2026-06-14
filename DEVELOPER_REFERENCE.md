@@ -1,24 +1,19 @@
 # WordPress Performance Optimization: Unified Developer Reference
 
-
 > **Status:** DRAFT  
-> **Version:** 1.0  
-> **Date:** 18 May 2026
+> **Version:** 1.1  
+> **Date:** 14 June 2026
 > **General Editor:** Dan Knauss
 
 > **Audience:** This guide is for developers doing WordPress performance optimization who need to decide **what to measure, where to look, what to change, and how to verify the result**. 
 
-> **Environments:** Ordinary hosting, managed WordPress platforms, and enterprise/VIP-style environments. 
+> **Environments:** Ordinary hosting, standard managed WordPress hosting platforms, and enterprise environments. 
 
-> **Sources:**
-  - Remkus de Vries’ **Make WordPress Fast** course for the Within WordPress Guild.
-  - Automattic/WordPress VIP Learn’s **Enterprise WordPress Performance** course notes.
-  - WordPress.org developer documentation on transients, object caching, cache bootstrap behavior, the Options API, and modern Core performance features.
-  - The official **WordPress.org Advanced Administration Handbook**, especially my (pending) cache clarification revisions, based on [Torsten Landsiedel's observations](https://torstenlandsiedel.de/2025/04/24/fehler-im-wordpress-core-wo-keine-ki-helfen-kann/). (Also see Trac an GitHub.)
-
-Three Core areas have changed materially beyond the current scope of the sources named above. The Options API autoload vocabulary expanded in WordPress 6.6, speculative loading merged into Core in WordPress 6.8, and WordPress 6.9 added frontend, query/cache, and WP-Cron performance deltas. All version-specific guidance below is scoped to WordPress 6.9.4.
+> **Acknowledgements:** This document draws on and has been checked against canonical resources and industry leaders, including the official **WordPress.org Advanced Administration Handbook**, Automattic/WordPress VIP Learn’s **Enterprise WordPress Performance** course, and Remkus de Vries’ **Make WordPress Fast** course for the Within WordPress Guild. Community discussions around WordPress.org developer documentation on transients, object caching, cache bootstrap behavior, the Options API, and modern Core performance features have informed this document as well.
 
 > **Currency:** Last verified against WordPress 6.9.4 on 2026-05-18.
+
+Three Core areas have changed materially beyond the current scope of the sources named above. The Options API autoload vocabulary expanded in WordPress 6.6, speculative loading merged into Core in WordPress 6.8, and WordPress 6.9 added frontend, query/cache, and WP-Cron performance deltas. All version-specific guidance below is scoped to WordPress 6.9.4.
 
 ---
 
@@ -1610,7 +1605,7 @@ A performance pass is not communicated by score deltas alone. Frame the work as:
 ### Local source and companion files
 
 - General checklist: [`wordpress-performance-optimization-checklist.md`](wordpress-performance-optimization-checklist.md)
-- Enterprise checklist: [`wpvip-enterprise-performance-operational-checklist.md`](wpvip-enterprise-performance-operational-checklist.md)
+- Enterprise checklist: [`enterprise-performance-operational-checklist.md`](enterprise-performance-operational-checklist.md)
 - Transients reference: [`REFERENCE-WP-Transients-Persistent-Object-Cache.md`](REFERENCE-WP-Transients-Persistent-Object-Cache.md)
 - Source-correction audit trail: [`docs/source-corrections.md`](docs/source-corrections.md)
 

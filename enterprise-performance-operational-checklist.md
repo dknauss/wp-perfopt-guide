@@ -7,12 +7,7 @@
 
 A checklist-oriented runbook based on the WP VIP Learn **Enterprise WordPress Performance** course. Use it to diagnose, optimize, and verify performance on high-traffic WordPress sites where backend execution, cacheability, database access, object caching, traffic events, and measurement discipline matter.
 
-> Operating rule: do not start by installing another performance plugin. Start by identifying where time is spent, whether WordPress is executing at all, and whether the response can safely be cached.
-
-
-## Companion cross-reference: Remkus De Vries' "Make WordPress Fast" 
-
-Use this runbook as the enterprise/backend/platform workflow. When a performance symptom is user-facing or frontend-heavy, cross-check the checklist based on Remkus' guidance at [`wordpress-performance-optimization-checklist.md`](wordpress-performance-optimization-checklist.md). It goes deeper on Core Web Vitals, LCP/INP/CLS, images, fonts, third-party scripts, CSS/JavaScript loading, page builders, DOM bloat, WooCommerce, Multisite, plugin stack simplification, DevTools, and performance reporting.
+> Do not start by installing another performance plugin. Start by identifying where time is spent, whether WordPress is executing at all, and whether the response can safely be cached.
 
 ---
 

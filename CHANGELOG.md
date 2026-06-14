@@ -4,6 +4,11 @@ All notable changes to this repository are documented here.
 
 ## Unreleased
 
+### Changed
+- Normalized the Performance series source map by renaming the enterprise operational checklist to `enterprise-performance-operational-checklist.md` and aligning repo metadata, generation config, and internal links with the new canonical filename.
+- Updated artifact validation to read per-document version and status metadata from `.github/documents.json` instead of assuming every source document is `Version 1.0` / `DRAFT`.
+- Regenerated and revalidated the full PDF, DOCX, and EPUB publication set after the Performance series filename normalization so release inputs and committed artifacts are back in sync.
+
 - Prepare the repository for publication: keep local planning state and Claude handoff guidance untracked, and align the README/AGENTS workflow notes with that boundary.
 - Updated generated document metadata and PDF running heads so each artifact shows its own title, DRAFT status, version 1.0, and Dan Knauss as General Editor.
 - Generated and validated PDF, DOCX, and EPUB artifacts for all four guide documents.
