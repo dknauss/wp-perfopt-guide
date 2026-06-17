@@ -20,12 +20,12 @@ if [ ! -f .github/pandoc/reference.docx ]; then
   pandoc --print-default-data-file reference.docx > .github/pandoc/reference.docx
 fi
 
-if command -v xelatex >/dev/null 2>&1; then
-  pdf_engine=xelatex
-elif command -v tectonic >/dev/null 2>&1; then
+if command -v tectonic >/dev/null 2>&1; then
   pdf_engine=tectonic
+elif command -v xelatex >/dev/null 2>&1; then
+  pdf_engine=xelatex
 else
-  echo "xelatex or tectonic is required for PDF generation" >&2
+  echo "tectonic or xelatex is required for PDF generation" >&2
   exit 1
 fi
 echo "Using PDF engine: $pdf_engine"
