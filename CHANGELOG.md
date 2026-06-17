@@ -5,6 +5,7 @@ All notable changes to this repository are documented here.
 ## Unreleased
 
 ### Changed
+- Moved full PDF/DOCX/EPUB publication to the tag-driven release workflow and converted `generate-docs.yml` into a manual preview/build workflow instead of automatic push/PR publication.
 - Moved the general “do not start by installing another performance plugin” guidance out of the enterprise checklist, replaced it with enterprise-focused evidence/approval/rollback framing, and fixed generated document task-list rendering by enabling Pandoc task-list parsing.
 - Promoted the full Performance series from `DRAFT` to `Released` status and raised the incident runbook to version 1.0 (parity with its 1.1/1.2 siblings) in both the document headers and `.github/documents.json`. Generated PDF/DOCX/EPUB artifacts must be regenerated to embed the new status/version.
 - Updated the editorial-board methodology to the current five-document series and added an Incident Runbook Reviewer role (shareable with the Enterprise Checklist Reviewer).
