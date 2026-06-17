@@ -1,0 +1,30 @@
+name: Validate Release Metadata
+
+on:
+  push:
+    branches: [main]
+    paths: &release_metadata_paths
+      - 'DEVELOPER_REFERENCE.md'
+      - 'wordpress-performance-optimization-checklist.md'
+      - 'enterprise-performance-operational-checklist.md'
+      - 'REFERENCE-WP-Transients-Persistent-Object-Cache.md'
+      - 'wordpress-performance-incident-runbook.md'
+      - '.github/documents.json'
+      - '.github/scripts/validate-release-metadata.py'
+      - '.github/workflows/validate-release-metadata.yml'
+  pull_request:
+    paths: *release_metadata_paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-release-metadata:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Validate manifest metadata
+        run: python3 .github/scripts/validate-release-metadata.py --manifest .github/documents.json
