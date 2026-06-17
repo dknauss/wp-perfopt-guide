@@ -4,6 +4,8 @@ All notable changes to this repository are documented here.
 
 ## Unreleased
 
+## 1.0.0 — 2026-06-17
+
 ### Changed
 - Moved full PDF/DOCX/EPUB publication to the tag-driven release workflow and converted `generate-docs.yml` into a manual preview/build workflow instead of automatic push/PR publication.
 - Moved the general “do not start by installing another performance plugin” guidance out of the enterprise checklist, replaced it with enterprise-focused evidence/approval/rollback framing, and fixed generated document task-list rendering by enabling Pandoc task-list parsing.
